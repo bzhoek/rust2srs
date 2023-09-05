@@ -1,0 +1,28 @@
+WHITESPACE = _{ " " }
+
+char = { ASCII_ALPHANUMERIC | " " | "+" }
+name = @{ char+ }
+value = { (!NEWLINE ~ ANY)* }
+section = { "[" ~ name ~ "]" }
+property = { name ~ ":" ~ value }
+comment = _{ ";" ~ (!NEWLINE ~ ANY)* }
+contents = _{ (comment | property)? }
+
+item = { ASCII_ALPHA+ }
+list = { item ~ ("," ~ item)* }
+format = { "Format:" ~ list }
+
+number = { DECIMAL_NUMBER+ }
+time = @{ DECIMAL_NUMBER ~ ":" ~ DECIMAL_NUMBER{2} ~ ":" ~ DECIMAL_NUMBER{2} ~ "." ~ DECIMAL_NUMBER{2} }
+
+dialogue_name = { (ASCII_ALPHANUMERIC | "_")+ }
+dialogue = { "Dialogue:" ~ number ~ "," ~ time ~ "," ~ time ~ "," ~ dialogue_name ~ "," ~ dialogue_name ~ "," ~ number ~ "," ~ number ~ "," ~ number ~ "," ~ value }
+
+events = _{ "[Events]" ~ NEWLINE ~ ((format | dialogue | contents) ~ NEWLINE)+ }
+other = _{ (section) ~ NEWLINE ~ (contents ~ NEWLINE)+ }
+
+file = {
+    SOI ~
+    (events | other)* ~
+    EOI
+}

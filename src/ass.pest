@@ -14,7 +14,11 @@ list = { item ~ ("," ~ item)* }
 format = { "Format:" ~ list }
 
 number = { DECIMAL_NUMBER+ }
-time = @{ DECIMAL_NUMBER ~ ":" ~ DECIMAL_NUMBER{2} ~ ":" ~ DECIMAL_NUMBER{2} ~ "." ~ DECIMAL_NUMBER{2} }
+hour = { DECIMAL_NUMBER }
+min = { DECIMAL_NUMBER{2} }
+sec = { DECIMAL_NUMBER{2} }
+hun = { DECIMAL_NUMBER{2} }
+time = ${ hour ~ ":" ~ min ~ ":" ~ sec ~ "." ~ hun }
 
 dialogue_name = { (ASCII_ALPHANUMERIC | "_")+ }
 dialogue = { "Dialogue:" ~ number ~ "," ~ time ~ "," ~ time ~ "," ~ dialogue_name ~ "," ~ dialogue_name ~ "," ~ number ~ "," ~ number ~ "," ~ number ~ "," ~ effect ~ "," ~ value }

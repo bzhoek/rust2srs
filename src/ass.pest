@@ -26,8 +26,9 @@ dialogue = { "Dialogue:" ~ number ~ "," ~ time ~ "," ~ time ~ "," ~ dialogue_nam
 events = _{ "[Events]" ~ NEWLINE ~ ((format | dialogue | contents) ~ NEWLINE)+ }
 other = _{ (section) ~ NEWLINE ~ (contents ~ NEWLINE)+ }
 
+bom = _{ "\u{feff}" }
 file = {
-    SOI ~
+    SOI ~ bom? ~
     (events | other)* ~
     EOI
 }

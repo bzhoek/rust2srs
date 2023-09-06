@@ -8,17 +8,33 @@ use pest_derive::Parser;
 #[grammar = "ass.pest"]
 pub struct AssParser;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Time {
   hour: u8,
   min: u8,
   sec: u8,
-  hun: u8,
+  mil: u16,
 }
 
 impl fmt::Display for Time {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "{}:{:02}:{:02}.{:02}", self.hour, self.min, self.sec, self.hun)
+    write!(f, "{}.{:02}.{:02}.{:03}", self.hour, self.min, self.sec, self.mil)
+  }
+}
+
+impl Time {
+  fn milliseconds(&self) -> u64 {
+    ((self.hour as u64 * 60 + self.min as u64) * 60 + self.sec as u64) * 1000 + self.mil as u64
+  }
+
+  fn half_way(&self, later: &Time) -> Time {
+    let half = (later.milliseconds() - self.milliseconds()) / 2;
+    Time {
+      hour: self.hour + (half / 3600_000 % 60) as u8,
+      min: self.min + (half / 60_000 % 60) as u8,
+      sec: self.sec + (half / 1000 % 60) as u8,
+      mil: self.mil + (half % 1000) as u16,
+    }
   }
 }
 
@@ -29,7 +45,7 @@ impl From<Pair<'_, Rule>> for Time {
     let min: u8 = time.next().unwrap().as_str().parse().unwrap();
     let sec: u8 = time.next().unwrap().as_str().parse().unwrap();
     let hun: u8 = time.next().unwrap().as_str().parse().unwrap();
-    Time { hour, min, sec, hun }
+    Time { hour, min, sec, mil: (hun * 10) as u16 }
   }
 }
 
@@ -62,7 +78,7 @@ pub fn parse_rules(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue> {
         let _effect = inner.next().unwrap();
         let text = inner.next().unwrap();
 
-        let dialogue = Dialogue { start: start, end: end, text: text.as_str().to_string() };
+        let dialogue = Dialogue { start, end, text: text.as_str().to_string() };
         println!("Dialogue: {:}", dialogue);
         list.push(dialogue);
       }
@@ -77,6 +93,7 @@ pub fn parse_rules(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue> {
 pub fn dump_rules(level: usize, pair: Pair<Rule>) {
   for pair in pair.into_inner() {
     match pair.as_rule() {
+      Rule::time => {}
       _ => {
         println!("{:level$} {:?}", level, pair);
         dump_rules(level + 1, pair);
@@ -85,13 +102,14 @@ pub fn dump_rules(level: usize, pair: Pair<Rule>) {
   }
 }
 
+
 #[cfg(test)]
 mod tests {
   use std::fs;
 
   use pest::Parser;
 
-  use crate::{AssParser, dump_rules, parse_rules, Rule};
+  use crate::{AssParser, dump_rules, parse_rules, Rule, Time};
 
   #[test]
   fn it_parses_substation() {
@@ -105,5 +123,28 @@ mod tests {
 
     let dialogue = parse_rules(file.clone(), vec![]);
     assert_eq!(dialogue.len(), 351);
+  }
+
+  #[test]
+  fn it_halves_first_duration() {
+    // ichigo-1_1_0.01.39.620-0.01.41.620.mp3
+    // ichigo-1_1_0.01.40.620.jpg
+    let start = Time { hour: 0, min: 1, sec: 39, mil: 620 };
+    let end = Time { hour: 0, min: 1, sec: 41, mil: 620 };
+    let diff = end.milliseconds() - start.milliseconds();
+    assert_eq!(2000, diff);
+    let result = start.half_way(&end);
+    assert_eq!(Time { hour: 0, min: 1, sec: 40, mil: 620 }, result)
+  }
+
+  #[test]
+  fn it_halves_last_duration() {
+    // ichigo-1_1_0.24.03.080-0.24.04.250.mp3
+    // ichigo-1_1_0.24.03.665.jpg
+    let start = Time { hour: 0, min: 24, sec: 3, mil: 80 };
+    let end = Time { hour: 0, min: 24, sec: 4, mil: 250 };
+    let result = start.half_way(&end);
+    assert_eq!(Time { hour: 0, min: 24, sec: 3, mil: 665 }, result);
+    assert_eq!("0.24.03.665", format!("{}", result))
   }
 }

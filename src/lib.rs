@@ -1,5 +1,6 @@
 use std::convert::Into;
 use std::fmt;
+use std::process::{Command, ExitStatus};
 
 use pest::iterators::Pair;
 use pest_derive::Parser;
@@ -35,6 +36,14 @@ impl Time {
       sec: self.sec + (half / 1000 % 60) as u8,
       mil: self.mil + (half % 1000) as u16,
     }
+  }
+
+  fn dot(&self) -> String {
+    format!("{}.{:02}.{:02}.{:03}", self.hour, self.min, self.sec, self.mil)
+  }
+
+  fn colon(&self) -> String {
+    format!("{}:{:02}:{:02}.{:03}", self.hour, self.min, self.sec, self.mil)
   }
 }
 
@@ -102,14 +111,41 @@ pub fn dump_rules(level: usize, pair: Pair<Rule>) {
   }
 }
 
+fn snapshot(video: &str, time: Time, output: String) -> std::io::Result<ExitStatus> {
+  Command::new("ffmpeg")
+    .arg("-i")
+    .arg(video)
+    .arg("-ss")
+    .arg(time.colon())
+    .arg("-frames:v")
+    .arg("1")
+    .arg("-y")
+    .arg(output)
+    .status()
+}
+
+fn audio(video: &str, start: Time, end: Time, output: String) -> std::io::Result<ExitStatus> {
+  Command::new("ffmpeg")
+    .arg("-i")
+    .arg(video)
+    .arg("-ss")
+    .arg(start.colon())
+    .arg("-to")
+    .arg(end.colon())
+    .arg("-y")
+    .arg(output)
+    .status()
+}
 
 #[cfg(test)]
 mod tests {
-  use std::fs;
+  use std::{error, fs};
 
   use pest::Parser;
 
   use crate::{AssParser, dump_rules, parse_rules, Rule, Time};
+
+  use super::*;
 
   #[test]
   fn it_parses_substation() {
@@ -146,5 +182,25 @@ mod tests {
     let result = start.half_way(&end);
     assert_eq!(Time { hour: 0, min: 24, sec: 3, mil: 665 }, result);
     assert_eq!("0.24.03.665", format!("{}", result))
+  }
+
+  type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+
+  #[test]
+  fn it_runs_ffmpeg() -> Result<()> {
+    let start = Time { hour: 0, min: 1, sec: 39, mil: 620 };
+    let end = Time { hour: 0, min: 1, sec: 41, mil: 620 };
+    let half = start.half_way(&end);
+    let video = "ichigo-01.mkv";
+
+    let output = format!("test.{}-{}.mp3", start.dot(), end.dot());
+    let status = audio(video, start, end, output)?;
+    assert!(status.success());
+
+    let output = format!("test.{}.jpg", half.dot());
+    let status = snapshot(video, half, output)?;
+    assert!(status.success());
+
+    Ok(())
   }
 }

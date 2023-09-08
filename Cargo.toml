@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 clap = "4.4.2"
+ffmpeg-next = "6.0.0"
 pest = "2.7.3"
 pest_derive = "2.7.3"

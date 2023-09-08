@@ -7,6 +7,7 @@ use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
 
+
 #[derive(Parser)]
 #[grammar = "ssa.pest"]
 pub struct SsaParser;
@@ -26,7 +27,7 @@ impl fmt::Display for Time {
 }
 
 impl Time {
-  fn milliseconds(&self) -> u64 {
+  pub fn milliseconds(&self) -> u64 {
     ((self.hour as u64 * 60 + self.min as u64) * 60 + self.sec as u64) * 1000 + self.mil as u64
   }
 

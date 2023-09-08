@@ -22,6 +22,10 @@ fn main() {
         .value_parser(value_parser!(PathBuf)),
     )
     .arg(
+      arg!(-o --output <FOLDER> "Folder to save output to")
+        .required(true)
+    )
+    .arg(
       arg!(-p --prefix <TEXT> "Prefix for output files")
         .required(true)
     )
@@ -29,19 +33,20 @@ fn main() {
 
   let video = matches.get_one::<PathBuf>("video").unwrap();
   let source = matches.get_one::<PathBuf>("source").unwrap();
+  let folder = matches.get_one::<String>("output").unwrap();
   let target = matches.get_one::<PathBuf>("target").unwrap();
   let prefix = matches.get_one::<String>("prefix").unwrap();
 
   let source = parse_ssa_file(source);
-  let first = source.first().unwrap();
-  let output = format!("{}_{}-{}.mp3", prefix, first.start.dot(), first.end.dot());
-  let status = audio(&video, &first.start, &first.end, output).unwrap();
-  assert!(status.success());
 
-  let half = first.start.half_way(&first.end);
-  let output = format!("{}_{}.jpg", prefix, half.dot());
-  let status = snapshot(&video, half, output).unwrap();
-  assert!(status.success());
+  for dialogue in source.into_iter() {
+    let audio_file = format!("{}/{}_{}-{}.mp3", folder, prefix, dialogue.start.dot(), dialogue.end.dot());
+    let status = audio(&video, &dialogue.start, &dialogue.end, audio_file).unwrap();
+    assert!(status.success());
 
-  println!("{:?} {:?} {:?} {}", video, first, target, prefix)
+    let half = dialogue.start.half_way(&dialogue.end);
+    let snapshot_file = format!("{}/{}_{}.jpg", folder, prefix, half.dot());
+    let status = snapshot(&video, half, snapshot_file).unwrap();
+    assert!(status.success());
+  }
 }

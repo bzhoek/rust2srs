@@ -31,12 +31,12 @@ impl Time {
   }
 
   pub fn half_way(&self, later: &Time) -> Time {
-    let half = (later.milliseconds() - self.milliseconds()) / 2;
+    let half = self.milliseconds() + (later.milliseconds() - self.milliseconds()) / 2;
     Time {
-      hour: self.hour + (half / 3600_000 % 60) as u8,
-      min: self.min + (half / 60_000 % 60) as u8,
-      sec: self.sec + (half / 1000 % 60) as u8,
-      mil: self.mil + (half % 1000) as u16,
+      hour: (half / 3600_000 % 60) as u8,
+      min: (half / 60_000 % 60) as u8,
+      sec: (half / 1000 % 60) as u8,
+      mil: (half % 1000) as u16,
     }
   }
 
@@ -152,7 +152,7 @@ pub fn audio(video: &Path, start: &Time, end: &Time, output: String) -> std::io:
 mod tests {
   use std::error;
 
-  use crate::{dump_rules, parse_rules, Time};
+  use crate::{parse_rules, Time};
 
   use super::*;
 
@@ -168,6 +168,14 @@ mod tests {
 
     let dialogue = parse_rules(file.clone(), vec![]);
     assert_eq!(dialogue.len(), 351);
+  }
+
+  #[test]
+  fn it_halves_properly() {
+    let start = Time { hour: 0, min: 1, sec: 59, mil: 10 };
+    let end = Time { hour: 0, min: 2, sec: 2, mil: 50 };
+    let half = start.half_way(&end);
+    assert_eq!(Time { hour: 0, min: 2, sec: 0, mil: 530 }, half);
   }
 
   #[test]

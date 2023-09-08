@@ -1,13 +1,15 @@
+use std::{fmt, fs};
 use std::convert::Into;
-use std::fmt;
+use std::path::Path;
 use std::process::{Command, ExitStatus};
 
 use pest::iterators::Pair;
+use pest::Parser;
 use pest_derive::Parser;
 
 #[derive(Parser)]
-#[grammar = "ass.pest"]
-pub struct AssParser;
+#[grammar = "ssa.pest"]
+pub struct SsaParser;
 
 #[derive(Debug, PartialEq)]
 pub struct Time {
@@ -28,7 +30,7 @@ impl Time {
     ((self.hour as u64 * 60 + self.min as u64) * 60 + self.sec as u64) * 1000 + self.mil as u64
   }
 
-  fn half_way(&self, later: &Time) -> Time {
+  pub fn half_way(&self, later: &Time) -> Time {
     let half = (later.milliseconds() - self.milliseconds()) / 2;
     Time {
       hour: self.hour + (half / 3600_000 % 60) as u8,
@@ -38,7 +40,7 @@ impl Time {
     }
   }
 
-  fn dot(&self) -> String {
+  pub fn dot(&self) -> String {
     format!("{}.{:02}.{:02}.{:03}", self.hour, self.min, self.sec, self.mil)
   }
 
@@ -47,22 +49,23 @@ impl Time {
   }
 }
 
+
 impl From<Pair<'_, Rule>> for Time {
   fn from(value: Pair<Rule>) -> Self {
     let mut time = value.into_inner();
     let hour: u8 = time.next().unwrap().as_str().parse().unwrap();
     let min: u8 = time.next().unwrap().as_str().parse().unwrap();
     let sec: u8 = time.next().unwrap().as_str().parse().unwrap();
-    let hun: u8 = time.next().unwrap().as_str().parse().unwrap();
-    Time { hour, min, sec, mil: (hun * 10) as u16 }
+    let hun: u16 = time.next().unwrap().as_str().parse().unwrap();
+    Time { hour, min, sec, mil: hun * 10 }
   }
 }
 
 #[derive(Debug)]
 pub struct Dialogue {
-  start: Time,
-  end: Time,
-  text: String,
+  pub start: Time,
+  pub end: Time,
+  pub text: String,
 }
 
 impl fmt::Display for Dialogue {
@@ -71,7 +74,16 @@ impl fmt::Display for Dialogue {
   }
 }
 
-pub fn parse_rules(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue> {
+pub fn parse_ssa_file(path: &Path) -> Vec<Dialogue> {
+  let contents = fs::read_to_string(path)
+    .expect("cannot read file");
+  let file = SsaParser::parse(Rule::file, &contents)
+    .expect("unsuccessful parse")
+    .next().unwrap();
+  parse_rules(file, vec![])
+}
+
+fn parse_rules(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue> {
   for pair in pair.into_inner() {
     match pair.as_rule() {
       Rule::dialogue => {
@@ -88,7 +100,6 @@ pub fn parse_rules(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue> {
         let text = inner.next().unwrap();
 
         let dialogue = Dialogue { start, end, text: text.as_str().to_string() };
-        println!("Dialogue: {:}", dialogue);
         list.push(dialogue);
       }
       _ => {
@@ -111,7 +122,7 @@ pub fn dump_rules(level: usize, pair: Pair<Rule>) {
   }
 }
 
-fn snapshot(video: &str, time: Time, output: String) -> std::io::Result<ExitStatus> {
+pub fn snapshot(video: &Path, time: Time, output: String) -> std::io::Result<ExitStatus> {
   Command::new("ffmpeg")
     .arg("-i")
     .arg(video)
@@ -124,7 +135,7 @@ fn snapshot(video: &str, time: Time, output: String) -> std::io::Result<ExitStat
     .status()
 }
 
-fn audio(video: &str, start: Time, end: Time, output: String) -> std::io::Result<ExitStatus> {
+pub fn audio(video: &Path, start: &Time, end: &Time, output: String) -> std::io::Result<ExitStatus> {
   Command::new("ffmpeg")
     .arg("-i")
     .arg(video)
@@ -139,21 +150,19 @@ fn audio(video: &str, start: Time, end: Time, output: String) -> std::io::Result
 
 #[cfg(test)]
 mod tests {
-  use std::{error, fs};
+  use std::error;
 
-  use pest::Parser;
-
-  use crate::{AssParser, dump_rules, parse_rules, Rule, Time};
+  use crate::{dump_rules, parse_rules, Time};
 
   use super::*;
 
   #[test]
   fn it_parses_substation() {
-    let contents = fs::read_to_string("tests/ichigo-01.ass").expect("cannot read file");
-    let file = AssParser::parse(Rule::file, &contents)
+    let contents = fs::read_to_string("tests/ichigo-01.ass")
+      .expect("cannot read file");
+    let file = SsaParser::parse(Rule::file, &contents)
       .expect("unsuccessful parse")
       .next().unwrap();
-
     dump_rules(1, file.clone());
     assert_eq!(file.clone().into_inner().len(), 370);
 
@@ -194,11 +203,11 @@ mod tests {
     let video = "ichigo-01.mkv";
 
     let output = format!("test.{}-{}.mp3", start.dot(), end.dot());
-    let status = audio(video, start, end, output)?;
+    let status = audio(video.as_ref(), &start, &end, output)?;
     assert!(status.success());
 
     let output = format!("test.{}.jpg", half.dot());
-    let status = snapshot(video, half, output)?;
+    let status = snapshot(video.as_ref(), half, output)?;
     assert!(status.success());
 
     Ok(())

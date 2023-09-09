@@ -10,7 +10,7 @@ use ffmpeg::media::Type;
 use ffmpeg::software::scaling::{context::Context, flag::Flags};
 use ffmpeg::util::frame::video::Video;
 
-use rust2srs::parse_ssa_file;
+use rust2srs::{parse_ssa_file, Time};
 
 fn main() -> Result<(), ffmpeg::Error> {
   let matches = Command::new("rust2srs")
@@ -66,54 +66,41 @@ fn main() -> Result<(), ffmpeg::Error> {
       Flags::BILINEAR,
     )?;
 
-    let mut frame_index = 0;
+    let mut dialogues = source.into_iter();
+    let mut dialogue = dialogues.next().unwrap();
+    let mut half = dialogue.start.half_way(&dialogue.end);
 
-    let mut receive_and_process_decoded_frames =
-      |decoder: &mut ffmpeg::decoder::Video, snapshot_file: String| -> Result<(), ffmpeg::Error> {
+    for (stream, packet) in input.packets() {
+      if stream.index() == stream_index {
+        video.send_packet(&packet)?;
         let mut decoded = Video::empty();
-        while decoder.receive_frame(&mut decoded).is_ok() {
-          let mut rgb_frame = Video::empty();
-          scaler.run(&decoded, &mut rgb_frame)?;
-          save_file(&rgb_frame, snapshot_file.clone()).unwrap();
-          frame_index += 1;
-          println!("Frame {}", frame_index);
-        }
-        Ok(())
-      };
-
-
-    for dialogue in source.into_iter() {
-      let half = dialogue.start.half_way(&dialogue.end);
-      let nanos = (dialogue.start.milliseconds() * 1000) as i64;
-      input.seek(nanos, (nanos..))?;
-      for (stream, packet) in input.packets() {
-        println!("{} - {}", packet.position(), half);
-        if stream.index() == stream_index {
-          video.send_packet(&packet)?;
-          let snapshot_file = format!("{}/{}_{}.jpg", folder, prefix, half.dot());
-          receive_and_process_decoded_frames(&mut video, snapshot_file)?;
-          break;
+        while video.receive_frame(&mut decoded).is_ok() {
+          let timestamp = decoded.timestamp().unwrap();
+          let timestamp = Time::from_nanos(timestamp as u64);
+          if timestamp.milliseconds() > half.milliseconds() {
+            println!("Saving {:?}", timestamp);
+            let snapshot_file = format!("{}/{}_{}.jpg", folder, prefix, half.dot());
+            let mut rgb_frame = Video::empty();
+            scaler.run(&decoded, &mut rgb_frame)?;
+            save_file(&rgb_frame, snapshot_file.clone()).unwrap();
+            match dialogues.next() {
+              None => { return Ok(()); }
+              Some(next) => {
+                dialogue = next;
+                half = dialogue.start.half_way(&dialogue.end);
+              }
+            }
+          }
         }
       }
     }
   }
 
   Ok(())
-
-  // for dialogue in source.into_iter() {
-  //   let audio_file = format!("{}/{}_{}-{}.mp3", folder, prefix, dialogue.start.dot(), dialogue.end.dot());
-  //   let status = audio(&video, &dialogue.start, &dialogue.end, audio_file).unwrap();
-  //   assert!(status.success());
-  //
-  //   let half = dialogue.start.half_way(&dialogue.end);
-  //   let snapshot_file = format!("{}/{}_{}.jpg", folder, prefix, half.dot());
-  //   let status = snapshot(&video, half, snapshot_file).unwrap();
-  //   assert!(status.success());
-  // }
 }
 
-fn save_file(frame: &Video, index: String) -> Result<(), std::io::Error> {
-  let mut file = File::create(index)?;
+fn save_file(frame: &Video, filename: String) -> Result<(), std::io::Error> {
+  let mut file = File::create(filename)?;
   file.write_all(format!("P6\n{} {}\n255\n", frame.width(), frame.height()).as_bytes())?;
   file.write_all(frame.data(0))?;
   Ok(())

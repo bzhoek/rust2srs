@@ -2,6 +2,8 @@
 
 * https://pest.rs/book/
 * https://blog.logrocket.com/building-rust-parser-pest-peg/
+* https://gist.github.com/cetra3/eafaf107252d7b3845d9fd0363f08cf7
+* https://blog.logrocket.com/decoding-encoding-images-rust-using-image-crate/
 
 ## Subtitles
 Substation Alpha (SSA) supports formatting, animation and karaoke. V4+ (ASS) is the advanced newer version. 

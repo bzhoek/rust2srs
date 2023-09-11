@@ -26,18 +26,22 @@ impl fmt::Display for Time {
 }
 
 impl Time {
-  fn milliseconds(&self) -> u64 {
+  pub fn from_nanos(nanos: u64) -> Time {
+    Time {
+      hour: (nanos / 3_600_000 % 60) as u8,
+      min: (nanos / 60_000 % 60) as u8,
+      sec: (nanos / 1000 % 60) as u8,
+      mil: (nanos % 1000) as u16,
+    }
+  }
+
+  pub fn milliseconds(&self) -> u64 {
     ((self.hour as u64 * 60 + self.min as u64) * 60 + self.sec as u64) * 1000 + self.mil as u64
   }
 
   pub fn half_way(&self, later: &Time) -> Time {
     let half = self.milliseconds() + (later.milliseconds() - self.milliseconds()) / 2;
-    Time {
-      hour: (half / 3600_000 % 60) as u8,
-      min: (half / 60_000 % 60) as u8,
-      sec: (half / 1000 % 60) as u8,
-      mil: (half % 1000) as u16,
-    }
+    Time::from_nanos(half)
   }
 
   pub fn dot(&self) -> String {
@@ -221,5 +225,11 @@ mod tests {
     assert!(status.success());
 
     Ok(())
+  }
+
+  #[test]
+  fn it_converts_nanos() {
+    let time = Time::from_nanos(1451951);
+    assert_eq!("0.24.11.951", format!("{}", time))
   }
 }

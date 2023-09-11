@@ -134,6 +134,8 @@ pub fn snapshot(video: &Path, time: Time, output: String) -> std::io::Result<Exi
     .arg(time.colon())
     .arg("-frames:v")
     .arg("1")
+    .arg("-loglevel")
+    .arg("error")
     .arg("-y")
     .arg(output)
     .status()

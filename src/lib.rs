@@ -1,4 +1,5 @@
 use std::{fmt, fs};
+use std::cmp::Ordering;
 use std::convert::Into;
 use std::path::Path;
 use std::process::{Command, ExitStatus};
@@ -22,6 +23,12 @@ pub struct Time {
 impl fmt::Display for Time {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(f, "{}.{:02}.{:02}.{:03}", self.hour, self.min, self.sec, self.mil)
+  }
+}
+
+impl PartialOrd for Time {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.milliseconds().cmp(&other.milliseconds()))
   }
 }
 
@@ -65,7 +72,7 @@ impl From<Pair<'_, Rule>> for Time {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Dialogue {
   pub start: Time,
   pub end: Time,
@@ -81,13 +88,18 @@ impl fmt::Display for Dialogue {
 pub fn parse_ssa_file(path: &Path) -> Vec<Dialogue> {
   let contents = fs::read_to_string(path)
     .expect("cannot read file");
+  let file = parse_to_rules(&contents);
+  parse_to_dialogue(file, vec![])
+}
+
+fn parse_to_rules(contents: &String) -> Pair<Rule> {
   let file = SsaParser::parse(Rule::file, &contents)
     .expect("unsuccessful parse")
     .next().unwrap();
-  parse_rules(file, vec![])
+  file
 }
 
-fn parse_rules(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue> {
+fn parse_to_dialogue(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue> {
   for pair in pair.into_inner() {
     match pair.as_rule() {
       Rule::dialogue => {
@@ -107,7 +119,7 @@ fn parse_rules(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue> {
         list.push(dialogue);
       }
       _ => {
-        list = parse_rules(pair, list);
+        list = parse_to_dialogue(pair, list);
       }
     }
   }
@@ -157,23 +169,61 @@ pub fn audio(video: &Path, start: &Time, end: &Time, output: String) -> std::io:
 #[cfg(test)]
 mod tests {
   use std::error;
+  use assert_matches::assert_matches;
 
-  use crate::{parse_rules, Time};
+  use crate::{parse_to_dialogue, Time};
 
   use super::*;
 
   #[test]
   fn it_parses_substation() {
-    let contents = fs::read_to_string("tests/ichigo-01.ass")
-      .expect("cannot read file");
-    let file = SsaParser::parse(Rule::file, &contents)
-      .expect("unsuccessful parse")
-      .next().unwrap();
+    let contents = fs::read_to_string("tests/ichigo-01.ass").unwrap();
+    let file = parse_to_rules(&contents);
     dump_rules(1, file.clone());
     assert_eq!(file.clone().into_inner().len(), 370);
 
-    let dialogue = parse_rules(file.clone(), vec![]);
+    let dialogue = parse_to_dialogue(file.clone(), vec![]);
     assert_eq!(dialogue.len(), 351);
+  }
+
+  #[test]
+  fn it_parses_substation_secondary() {
+    let contents = fs::read_to_string("tests/ichigo-01_en.ass").unwrap();
+    let file = parse_to_rules(&contents);
+    assert_eq!(file.clone().into_inner().len(), 557);
+
+    let dialogue = parse_to_dialogue(file.clone(), vec![]);
+    assert_eq!(dialogue.len(), 446);
+  }
+
+  fn get_dialogue(path: &str) -> Vec<Dialogue> {
+    let contents = fs::read_to_string(path).unwrap();
+    let rules = parse_to_rules(&contents);
+    let dialogue = parse_to_dialogue(rules, vec![]);
+    dialogue
+  }
+
+  #[test]
+  fn it_matches_secondary_subtitle() {
+    let primary = get_dialogue("tests/ichigo-01.ass");
+    assert_eq!(primary.len(), 351);
+    let first = primary.first().unwrap();
+    let secondary = get_dialogue("tests/ichigo-01_en.ass");
+    assert_eq!(secondary.len(), 446);
+    let second = find_secondary_match(first, &secondary);
+    assert_matches!(second, Some(Dialogue {text, .. }) if text == "What lovely weather.");
+    let last = primary.last().unwrap();
+    let second = find_secondary_match(last, &secondary);
+    assert_matches!(second, Some(Dialogue {text, .. }) if text == "Uh, like what?");
+  }
+
+  fn find_secondary_match<'a>(dialogue: &'a Dialogue, secondary: &'a Vec<Dialogue>) -> Option<&'a Dialogue> {
+    for second in secondary.iter() {
+      if second.start >= dialogue.start && second.start <= dialogue.end {
+        return Some(second);
+      }
+    }
+    None
   }
 
   #[test]

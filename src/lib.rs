@@ -210,20 +210,47 @@ mod tests {
     let first = primary.first().unwrap();
     let secondary = get_dialogue("tests/ichigo-01_en.ass");
     assert_eq!(secondary.len(), 446);
-    let second = find_secondary_match(first, &secondary);
-    assert_matches!(second, Some(Dialogue {text, .. }) if text == "What lovely weather.");
+    let second = find_secondary_matches(first, &secondary);
+    assert_matches!(second.first(), Some(Dialogue {text, .. }) if text == "What lovely weather.");
     let last = primary.last().unwrap();
-    let second = find_secondary_match(last, &secondary);
-    assert_matches!(second, Some(Dialogue {text, .. }) if text == "Uh, like what?");
+    let second = find_secondary_matches(last, &secondary);
+    assert_matches!(second.first(), Some(Dialogue {text, .. }) if text == "Uh, like what?");
   }
 
-  fn find_secondary_match<'a>(dialogue: &'a Dialogue, secondary: &'a Vec<Dialogue>) -> Option<&'a Dialogue> {
-    for second in secondary.iter() {
-      if second.start >= dialogue.start && second.start <= dialogue.end {
-        return Some(second);
-      }
+  #[test]
+  fn it_matches_multiple_lines() {
+    let primary = get_dialogue("tests/ichigo-01.ass");
+    let first = primary.get(4).unwrap();
+    let secondary = get_dialogue("tests/ichigo-01_en.ass");
+    let second = find_secondary_matches(first, &secondary);
+
+    assert_eq!(2, second.len());
+    assert_matches!(second.get(0), Some(Dialogue {text, .. }) if text == "I'm lying. Despite my girlish looks...");
+    assert_matches!(second.get(1), Some(Dialogue {text, .. }) if text == "...I'm a 20-year-old junior-college student.");
+  }
+
+  #[test]
+  fn it_generates_tab_separated() {
+    let primary = get_dialogue("tests/ichigo-01.ass");
+    let secondary = get_dialogue("tests/ichigo-01_en.ass");
+    for first in primary.iter() {
+      let second = find_secondary_matches(first, &secondary);
+      let text = first.text
+        .replace("\\N", " ")
+        .replace("\\n", " ");
+      let second: String = second.iter().map(|d| d.text.clone()).collect::<Vec<_>>().join(" ")
+        .replace("\\N", " ")
+        .replace("\\n", " ");
+      println!("{}\t{}", text, second);
     }
-    None
+  }
+
+  fn find_secondary_matches<'a>(dialogue: &'a Dialogue, secondary: &'a Vec<Dialogue>) ->
+  Vec<&'a Dialogue> {
+    secondary
+      .iter().filter(
+      |second| second.start >= dialogue.start && second.start < dialogue.end)
+      .collect()
   }
 
   #[test]

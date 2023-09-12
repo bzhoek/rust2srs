@@ -114,9 +114,11 @@ fn parse_to_dialogue(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue>
         let _margin_v = inner.next().unwrap();
         let _effect = inner.next().unwrap();
         let text = inner.next().unwrap();
-
-        let dialogue = Dialogue { start, end, text: text.as_str().to_string() };
-        list.push(dialogue);
+        let string = text.as_str().to_string();
+        if !string.starts_with("{\\") {
+          let dialogue = Dialogue { start, end, text: string };
+          list.push(dialogue);
+        }
       }
       _ => {
         list = parse_to_dialogue(pair, list);

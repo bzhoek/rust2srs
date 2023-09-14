@@ -185,7 +185,7 @@ mod tests {
     assert_eq!(file.clone().into_inner().len(), 370);
 
     let dialogue = parse_to_dialogue(file.clone(), vec![]);
-    assert_eq!(dialogue.len(), 351);
+    assert_eq!(dialogue.len(), 350);
   }
 
   #[test]
@@ -195,7 +195,7 @@ mod tests {
     assert_eq!(file.clone().into_inner().len(), 557);
 
     let dialogue = parse_to_dialogue(file.clone(), vec![]);
-    assert_eq!(dialogue.len(), 446);
+    assert_eq!(dialogue.len(), 359);
   }
 
   fn get_dialogue(path: &str) -> Vec<Dialogue> {
@@ -208,10 +208,10 @@ mod tests {
   #[test]
   fn it_matches_secondary_subtitle() {
     let primary = get_dialogue("tests/ichigo-01.ass");
-    assert_eq!(primary.len(), 351);
+    assert_eq!(primary.len(), 350);
     let first = primary.first().unwrap();
     let secondary = get_dialogue("tests/ichigo-01_en.ass");
-    assert_eq!(secondary.len(), 446);
+    assert_eq!(secondary.len(), 359);
     let second = find_secondary_matches(first, &secondary);
     assert_matches!(second.first(), Some(Dialogue {text, .. }) if text == "What lovely weather.");
     let last = primary.last().unwrap();

@@ -8,6 +8,9 @@ brew install ffmpeg
 * https://blog.logrocket.com/building-rust-parser-pest-peg/
 * https://gist.github.com/cetra3/eafaf107252d7b3845d9fd0363f08cf7
 * https://blog.logrocket.com/decoding-encoding-images-rust-using-image-crate/
+* https://github.com/zmwangx/rust-ffmpeg
+* https://gitlab.com/anthony-tron/mp3cut
+* http://www.tcax.org/docs/ass-specs.htm
 
 ## Subtitles
 Substation Alpha (SSA) supports formatting, animation and karaoke. V4+ (ASS) is the advanced newer version. 
@@ -21,6 +24,11 @@ ffmpeg -i ichigo-01.mkv -ss 0:01:39.62 -frames:v 1 -y output.jpeg
 ffmpeg -i ichigo-01.mkv -ss 0:01:39.62 -to 0:01:41.62 -y output.mp3
 ```
 
+### Audio
+https://www.baeldung.com/linux/ffmpeg-audio-from-video
+```sh
+ffmpeg -i video.mkv -map 0:0 -b:a 128 -acodec copy audio.mp3
+```
 ### Resize
 
 ```sh

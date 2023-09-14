@@ -9,8 +9,8 @@ use pest::Parser;
 use pest_derive::Parser;
 
 #[derive(Parser)]
-#[grammar = "ssa.pest"]
-pub struct SsaParser;
+#[grammar = "assa.pest"]
+pub struct AssaParser;
 
 #[derive(Debug, PartialEq)]
 pub struct Time {
@@ -93,7 +93,7 @@ pub fn parse_ssa_file(path: &Path) -> Vec<Dialogue> {
 }
 
 fn parse_to_rules(contents: &String) -> Pair<Rule> {
-  let file = SsaParser::parse(Rule::file, &contents)
+  let file = AssaParser::parse(Rule::file, &contents)
     .expect("unsuccessful parse")
     .next().unwrap();
   file

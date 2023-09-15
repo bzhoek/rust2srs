@@ -11,6 +11,7 @@ brew install ffmpeg
 * https://github.com/zmwangx/rust-ffmpeg
 * https://gitlab.com/anthony-tron/mp3cut
 * http://www.tcax.org/docs/ass-specs.htm
+* https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API
 * https://greasyfork.org/en/scripts/26654-netflix-subtitle-downloader
 
 

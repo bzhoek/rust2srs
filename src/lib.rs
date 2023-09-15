@@ -1,4 +1,5 @@
 mod mp3;
+mod webvtt;
 
 use std::{error, fmt, fs};
 use std::cmp::Ordering;

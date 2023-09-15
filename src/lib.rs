@@ -171,7 +171,11 @@ pub fn audio(video: &Path, start: &Time, end: &Time, output: String) -> std::io:
 #[cfg(test)]
 mod tests {
   use std::error;
+  use std::fs::File;
+  use std::io::{Read, Seek, SeekFrom};
+
   use assert_matches::assert_matches;
+  use rmp3::Decoder;
 
   use crate::{parse_to_dialogue, Time};
 
@@ -248,7 +252,7 @@ mod tests {
   }
 
   fn find_secondary_matches<'a>(dialogue: &'a Dialogue, secondary: &'a Vec<Dialogue>) ->
-  Vec<&'a Dialogue> {
+                                                                                      Vec<&'a Dialogue> {
     secondary
       .iter().filter(
       |second| second.start >= dialogue.start && second.start < dialogue.end)
@@ -310,5 +314,40 @@ mod tests {
   fn it_converts_nanos() {
     let time = Time::from_nanos(1451951);
     assert_eq!("0.24.11.951", format!("{}", time))
+  }
+
+  #[test]
+  fn it_uses_rmp3() {
+    let mut file = fs::read("audio.mp3").unwrap();
+    assert_eq!(82964955, file.len());
+    let mut decoder = Decoder::new(&file);
+    let mut count = 0;
+
+    while let Some(frame) = decoder.next() {
+      count += 1;
+      // decoder.skip();
+    }
+    assert_eq!(216052, count);
+  }
+
+  #[test]
+  fn it_extracts_mp3() {
+    let samples = 1152;
+    let bytes_per_frame = 1162 / 8;
+    let bitrate = 128;
+    let frame_size = bytes_per_frame * bitrate / 44;
+    assert_eq!(421, frame_size);
+    let mut frame = vec![0u8; frame_size];
+
+    let mut start = 0;
+    // let frame = vec![0; count];
+    let mut file = File::open("audio.mp3").unwrap();
+    loop {
+      println!("{}", start);
+      file.seek(SeekFrom::Start(start)).unwrap();
+      let result = file.read(&mut frame).unwrap();
+      assert_eq!(result, frame_size);
+      start = start + result as u64;
+    }
   }
 }

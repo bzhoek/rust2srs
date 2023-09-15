@@ -421,6 +421,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dbb5fb1acd8a1a18b3dd5be62d25485eb770e05afb408a9627d14d451bae12da"
 
 [[package]]
+name = "rmp3"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3d9fb2c89a819645c57007782fd4db5bfa1abe290e1df5f530a441dc21ab1ad"
+dependencies = [
+ "cc",
+ "libc",
+]
+
+[[package]]
 name = "rust2srs"
 version = "0.1.0"
 dependencies = [
@@ -430,6 +440,7 @@ dependencies = [
  "jpeg-encoder",
  "pest",
  "pest_derive",
+ "rmp3",
 ]
 
 [[package]]

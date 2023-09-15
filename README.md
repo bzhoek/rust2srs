@@ -30,6 +30,7 @@ ffmpeg -i ichigo-01.mkv -ss 0:01:39.62 -to 0:01:41.62 -y output.mp3
 https://www.baeldung.com/linux/ffmpeg-audio-from-video
 ```sh
 ffmpeg -i video.mkv -map 0:0 -b:a 128 -acodec copy audio.mp3
+ffmpeg -i ichigo-01.mkv -map 0:1 -b:a 128k -acodec libmp3lame ichigo-01.mp3
 ```
 ### Resize
 

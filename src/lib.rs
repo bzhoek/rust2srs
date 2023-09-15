@@ -1,4 +1,6 @@
-use std::{fmt, fs};
+mod mp3;
+
+use std::{error, fmt, fs};
 use std::cmp::Ordering;
 use std::convert::Into;
 use std::path::Path;
@@ -7,6 +9,8 @@ use std::process::{Command, ExitStatus};
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
+
+pub type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 #[derive(Parser)]
 #[grammar = "assa.pest"]
@@ -92,8 +96,8 @@ pub fn parse_ssa_file(path: &Path) -> Vec<Dialogue> {
   parse_to_dialogue(file, vec![])
 }
 
-fn parse_to_rules(contents: &String) -> Pair<Rule> {
-  let file = AssaParser::parse(Rule::file, &contents)
+fn parse_to_rules(contents: &str) -> Pair<Rule> {
+  let file = AssaParser::parse(Rule::file, contents)
     .expect("unsuccessful parse")
     .next().unwrap();
   file
@@ -170,7 +174,6 @@ pub fn audio(video: &Path, start: &Time, end: &Time, output: String) -> std::io:
 
 #[cfg(test)]
 mod tests {
-  use std::error;
   use assert_matches::assert_matches;
 
   use crate::{parse_to_dialogue, Time};
@@ -285,8 +288,6 @@ mod tests {
     assert_eq!(Time { hour: 0, min: 24, sec: 3, mil: 665 }, result);
     assert_eq!("0.24.03.665", format!("{}", result))
   }
-
-  type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
   #[test]
   fn it_runs_ffmpeg() -> Result<()> {

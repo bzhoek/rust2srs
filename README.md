@@ -11,6 +11,8 @@ brew install ffmpeg
 * https://github.com/zmwangx/rust-ffmpeg
 * https://gitlab.com/anthony-tron/mp3cut
 * http://www.tcax.org/docs/ass-specs.htm
+* https://greasyfork.org/en/scripts/26654-netflix-subtitle-downloader
+
 
 ## Subtitles
 Substation Alpha (SSA) supports formatting, animation and karaoke. V4+ (ASS) is the advanced newer version. 
@@ -28,6 +30,7 @@ ffmpeg -i ichigo-01.mkv -ss 0:01:39.62 -to 0:01:41.62 -y output.mp3
 https://www.baeldung.com/linux/ffmpeg-audio-from-video
 ```sh
 ffmpeg -i video.mkv -map 0:0 -b:a 128 -acodec copy audio.mp3
+ffmpeg -i ichigo-01.mkv -map 0:1 -b:a 128k -acodec libmp3lame ichigo-01.mp3
 ```
 ### Resize
 

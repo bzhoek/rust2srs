@@ -42,7 +42,7 @@ fn main() -> Result<(), ffmpeg::Error> {
   let video_file = matches.get_one::<PathBuf>("video").unwrap();
   let source = matches.get_one::<PathBuf>("source").unwrap();
   let folder = matches.get_one::<String>("output").unwrap();
-  let target = matches.get_one::<PathBuf>("target").unwrap();
+  let _target = matches.get_one::<PathBuf>("target").unwrap();
   let prefix = matches.get_one::<String>("prefix").unwrap();
   let source = parse_ssa_file(source);
 

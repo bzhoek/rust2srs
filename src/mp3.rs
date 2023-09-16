@@ -1,5 +1,6 @@
 use std::fs;
 use std::fs::write;
+
 use rmp3::{Decoder, Frame};
 
 use crate::Result;
@@ -48,8 +49,9 @@ mod tests {
   use std::fs;
 
   use rmp3::{Decoder, Frame};
+  use crate::assa::parse_assa_to_dialogue;
 
-  use crate::{parse_ssa_file, Time};
+  use crate::Time;
   use crate::mp3::Mp3;
 
   #[test]
@@ -87,7 +89,8 @@ mod tests {
   #[test]
   fn it_slices_dialogue() {
     let mp3 = Mp3::new("ichigo-01.mp3").unwrap();
-    let source = parse_ssa_file("tests/ichigo-01.ass".as_ref());
+    let contents = fs::read_to_string("tests/ichigo-01.ass").unwrap();
+    let source = parse_assa_to_dialogue(&contents).unwrap();
     let folder = "target";
     let prefix = "ichigo-01";
     for dialogue in source {

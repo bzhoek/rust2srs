@@ -10,7 +10,7 @@ use ffmpeg::software::scaling::{context::Context, flag::Flags};
 use ffmpeg::util::frame::video::Video;
 use jpeg_encoder::{ColorType, Encoder, EncodingError};
 
-use rust2srs::{parse_ssa_file, Time};
+use rust2srs::{parse_subtitle_file, Time};
 
 fn main() -> Result<(), ffmpeg::Error> {
   let matches = Command::new("rust2srs")
@@ -40,11 +40,11 @@ fn main() -> Result<(), ffmpeg::Error> {
     .get_matches();
 
   let video_file = matches.get_one::<PathBuf>("video").unwrap();
-  let source = matches.get_one::<PathBuf>("source").unwrap();
+  let source = matches.get_one::<String>("source").unwrap();
   let folder = matches.get_one::<String>("output").unwrap();
   let _target = matches.get_one::<PathBuf>("target").unwrap();
   let prefix = matches.get_one::<String>("prefix").unwrap();
-  let source = parse_ssa_file(source);
+  let source = parse_subtitle_file(source).expect("Unrecognized subtitle format");
 
   ffmpeg::init().unwrap();
   if let Ok(mut input) = input(&video_file) {

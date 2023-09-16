@@ -76,7 +76,7 @@ mod tests {
   use assert_matches::assert_matches;
 
   use crate::assa::parse_assa;
-  use crate::parse_subtitle_file;
+  use crate::{find_secondary_matches, parse_subtitle_file};
 
   use super::*;
 
@@ -115,13 +115,6 @@ mod tests {
     assert_matches!(second.first(), Some(Dialogue {text, .. }) if text == "Uh, like what?");
   }
 
-  fn find_secondary_matches<'a>(dialogue: &'a Dialogue, secondary: &'a Vec<Dialogue>) ->
-  Vec<&'a Dialogue> {
-    secondary
-      .iter().filter(
-      |second| second.start >= dialogue.start && second.start < dialogue.end)
-      .collect()
-  }
 
   #[test]
   fn it_matches_multiple_lines() {

@@ -3,7 +3,7 @@ use std::fs::write;
 
 use rmp3::{Decoder, Frame};
 
-use crate::Result;
+use crate::{Dialogue, Result};
 
 pub struct Mp3 {
   bytes: Vec<u8>,
@@ -33,7 +33,7 @@ impl Mp3 {
             if duration >= end as f64 {
               let contents = &self.bytes[start..decoder.position()];
               write(file, contents)?;
-              return Ok(())
+              return Ok(());
             }
           }
         }
@@ -44,15 +44,24 @@ impl Mp3 {
   }
 }
 
+pub fn extract_sound_clips(audio_file: &str, folder: &str, prefix: &str, subtitles: Vec<Dialogue>)
+                           -> Result<()> {
+  let mp3 = Mp3::new(audio_file)?;
+  for dialogue in subtitles {
+    let audio_file = format!("{}/{}_{}-{}.mp3", folder, prefix, dialogue.start, dialogue.end);
+    mp3.slice(&audio_file, dialogue.start.milliseconds(), dialogue.end.milliseconds()).unwrap();
+  }
+  Ok(())
+}
+
 #[cfg(test)]
 mod tests {
   use std::fs;
 
   use rmp3::{Decoder, Frame};
-  use crate::assa::parse_assa_to_dialogue;
 
-  use crate::Time;
-  use crate::mp3::Mp3;
+  use crate::{parse_subtitle_file, Time};
+  use crate::mp3::{extract_sound_clips, Mp3};
 
   #[test]
   fn it_uses_rmp3() {
@@ -87,16 +96,32 @@ mod tests {
   }
 
   #[test]
-  fn it_slices_dialogue() {
-    let mp3 = Mp3::new("ichigo-01.mp3").unwrap();
-    let contents = fs::read_to_string("tests/ichigo-01.ass").unwrap();
-    let source = parse_assa_to_dialogue(&contents).unwrap();
-    let folder = "target";
-    let prefix = "ichigo-01";
-    for dialogue in source {
-      // ichigo-1_1_0.02.38.090-0.02.40.380
-      let audio_file = format!("{}/{}_{}-{}.mp3", folder, prefix, dialogue.start, dialogue.end);
-      mp3.slice(&audio_file, dialogue.start.milliseconds(), dialogue.end.milliseconds()).unwrap();
-    }
+  fn it_slices_ichigo() {
+    let subtitles = parse_subtitle_file("tests/ichigo-01.ass").unwrap();
+    extract_sound_clips("ichigo-01.mp3", "target", "ichigo-01", subtitles).unwrap();
   }
+  fn it_extracts_totoro() {
+    let subtitles = parse_subtitle_file("tests/totoro.ja.vtt").unwrap();
+    extract_sound_clips("totoro.mp3", "target", "totoro", subtitles).unwrap();
+  }
+
+  #[test]
+  fn it_slices_totoro() {
+    let mp3 = Mp3::new("totoro.mp3").unwrap();
+    // 00:04:52,470 --> 00:04:54,490
+    let start = Time { hour: 0, min: 4, sec: 52, mil: 470 };
+    let end = Time { hour: 0, min: 4, sec: 54, mil: 490 };
+    mp3.slice("target/output-1.mp3", start.milliseconds(), end.milliseconds()).unwrap();
+  }
+
+  #[test]
+  fn it_extracts_one_totoro_dialogue() {
+    let mut dialogue = parse_subtitle_file("tests/totoro.ja.vtt").unwrap();
+    assert_eq!(839, dialogue.len());
+    let one = dialogue.remove(26);
+    let dialogue = vec![one];
+    extract_sound_clips("totoro.mp3", "target", "totoro", dialogue).unwrap();
+  }
+
+
 }

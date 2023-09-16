@@ -1,14 +1,13 @@
 use std::{error, fmt, fs};
 use std::cmp::Ordering;
-use std::path::Path;
-use std::process::{Command, ExitStatus};
-use crate::assa::parse_assa_to_dialogue;
 
+use crate::assa::parse_assa_to_dialogue;
 use crate::webvtt::parse_webvtt_to_dialogue;
 
 mod assa;
 mod mp3;
 mod webvtt;
+pub mod ffmpeg;
 
 pub type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
@@ -77,44 +76,25 @@ pub fn parse_subtitle_file(path: &str) -> Option<Vec<Dialogue>> {
   let contents = fs::read_to_string(path)
     .expect("cannot read file");
   if let Some(dialogue) = parse_assa_to_dialogue(&contents) {
-    return Some(dialogue)
+    return Some(dialogue);
   }
   if let Some(dialogue) = parse_webvtt_to_dialogue(&contents) {
-    return Some(dialogue)
+    return Some(dialogue);
   }
   None
 }
 
-pub fn snapshot(video: &Path, time: Time, output: String) -> std::io::Result<ExitStatus> {
-  Command::new("ffmpeg")
-    .arg("-i")
-    .arg(video)
-    .arg("-ss")
-    .arg(time.colon())
-    .arg("-frames:v")
-    .arg("1")
-    .arg("-loglevel")
-    .arg("error")
-    .arg("-y")
-    .arg(output)
-    .status()
-}
-
-pub fn audio(video: &Path, start: &Time, end: &Time, output: String) -> std::io::Result<ExitStatus> {
-  Command::new("ffmpeg")
-    .arg("-i")
-    .arg(video)
-    .arg("-ss")
-    .arg(start.colon())
-    .arg("-to")
-    .arg(end.colon())
-    .arg("-y")
-    .arg(output)
-    .status()
+pub fn find_secondary_matches<'a>(dialogue: &'a Dialogue, secondary: &'a Vec<Dialogue>) ->
+Vec<&'a Dialogue> {
+  secondary
+    .iter().filter(
+    |second| second.start >= dialogue.start && second.start < dialogue.end)
+    .collect()
 }
 
 #[cfg(test)]
 mod tests {
+  use crate::ffmpeg::{audio, snapshot};
   use super::*;
 
   #[test]

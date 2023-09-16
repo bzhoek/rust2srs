@@ -2,17 +2,33 @@ use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
 
+use crate::{Dialogue, Time};
+
 #[derive(Parser)]
 #[grammar = "webvtt.pest"]
 pub struct WebVttParser;
 
-fn parse_to_rules(contents: &str) -> Pair<Rule> {
-  let file = WebVttParser::parse(Rule::file, contents)
-    .expect("unsuccessful parse")
-    .next().unwrap();
-  file
+impl From<Pair<'_, Rule>> for Time {
+  fn from(value: Pair<Rule>) -> Self {
+    let mut time = value.into_inner();
+    let hour: u8 = time.next().unwrap().as_str().parse().unwrap();
+    let min: u8 = time.next().unwrap().as_str().parse().unwrap();
+    let sec: u8 = time.next().unwrap().as_str().parse().unwrap();
+    let hun: u16 = time.next().unwrap().as_str().parse().unwrap();
+    Time { hour, min, sec, mil: hun * 10 }
+  }
 }
 
+fn parse_webvtt(contents: &str) -> Option<Pair<Rule>> {
+  WebVttParser::parse(Rule::file, contents).ok()?.next()
+}
+
+pub fn parse_webvtt_to_dialogue(contents: &str) -> Option<Vec<Dialogue>> {
+  let file = parse_webvtt(contents)?;
+  Some(webvtt_to_dialogue(file, vec![]))
+}
+
+#[allow(dead_code)]
 pub fn dump_rules(level: usize, pair: Pair<Rule>) {
   for pair in pair.into_inner() {
     match pair.as_rule() {
@@ -25,24 +41,20 @@ pub fn dump_rules(level: usize, pair: Pair<Rule>) {
   }
 }
 
-pub struct Cue {
-  pub text: String,
-}
-
-fn parse_to_cues(pair: Pair<Rule>, mut list: Vec<Cue>) -> Vec<Cue> {
+fn webvtt_to_dialogue(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue> {
   for pair in pair.into_inner() {
     match pair.as_rule() {
-      Rule::cue_body => {
-        // let inner = pair.into_inner();
-        // println!("{}", inner.as_str());
-        // let mut inner = pair.into_inner();
-        // let text = inner.next().unwrap();
-        // let string = text.as_str().to_string();
-        let dialogue = Cue { text: pair.as_str().to_string() };
+      Rule::cue => {
+        let mut inner = pair.into_inner();
+        let start: Time = inner.next().unwrap().into();
+        let end: Time = inner.next().unwrap().into();
+        let payload = inner.next().unwrap();
+        let text = payload.into_inner().next().unwrap().as_str().to_string();
+        let dialogue = Dialogue { start, end, text };
         list.push(dialogue);
       }
       _ => {
-        list = parse_to_cues(pair, list);
+        list = webvtt_to_dialogue(pair, list);
       }
     }
   }
@@ -57,14 +69,22 @@ mod tests {
   use super::*;
 
   #[test]
-  fn it_parses_webvtt() {
+  fn it_parses_japanese_webvtt() {
     let contents = fs::read_to_string("tests/totoro.ja.vtt").unwrap();
-    let file = parse_to_rules(&contents);
-    // println!("{}", file);
-    // dump_rules(1, file.clone());
-    assert_eq!(840, file.clone().into_inner().len());
-    let cues = parse_to_cues(file.clone(), vec![]);
+    let file = parse_webvtt(&contents).unwrap();
+    assert_eq!(843, file.clone().into_inner().len());
+    let cues = webvtt_to_dialogue(file.clone(), vec![]);
     assert_eq!("<c.japanese>♪～</c.japanese>", cues.first().unwrap().text);
     assert_eq!(839, cues.len());
+  }
+
+  #[test]
+  fn it_parses_english_webvtt() {
+    let contents = fs::read_to_string("tests/totoro.en.vtt").unwrap();
+    let file = parse_webvtt(&contents).unwrap();
+    assert_eq!(619, file.clone().into_inner().len());
+    let cues = webvtt_to_dialogue(file.clone(), vec![]);
+    assert_eq!("Dad, do you want some candy?", cues.first().unwrap().text);
+    assert_eq!(615, cues.len());
   }
 }

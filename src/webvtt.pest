@@ -1,0 +1,26 @@
+WHITESPACE = _{ " " }
+
+hour = { DECIMAL_NUMBER{2} }
+min = { DECIMAL_NUMBER{2} }
+sec = { DECIMAL_NUMBER{2} }
+hun = { DECIMAL_NUMBER{3} }
+timestamp = ${ (hour ~ ":")? ~ min ~ ":" ~ sec ~ "." ~ hun }
+
+to_eol = _{ (!NEWLINE ~ ANY)* }
+double_nl = _{ NEWLINE{2} }
+bom = _{ "\u{feff}" }
+header = { "WEBVTT" ~ to_eol ~ NEWLINE* }
+note = { "NOTE" ~ (!double_nl ~ ANY)* ~ double_nl }
+
+cue_id = _{ to_eol ~ NEWLINE }
+cue_body = { (!double_nl ~ ANY)* }
+cue_payload = { cue_body ~ double_nl }
+cue = { cue_id? ~ timestamp ~ "-->" ~ timestamp ~ to_eol ~ NEWLINE ~ cue_payload }
+file = {
+    SOI ~ bom? ~ header ~
+    note* ~
+    NEWLINE* ~
+    cue* ~
+    NEWLINE* ~
+    EOI
+}

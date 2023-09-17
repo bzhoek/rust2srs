@@ -92,7 +92,7 @@ mod tests {
     let mp3 = Mp3::new("ichigo-01.mp3").unwrap();
     let start = Time { hour: 0, min: 1, sec: 39, mil: 620 };
     let end = Time { hour: 0, min: 1, sec: 41, mil: 620 };
-    mp3.slice("target/output-1.mp3", start.milliseconds(), end.milliseconds()).unwrap();
+    mp3.slice("target/ichigo-1.mp3", start.milliseconds(), end.milliseconds()).unwrap();
   }
 
   #[test]
@@ -100,8 +100,10 @@ mod tests {
     let subtitles = parse_subtitle_file("tests/ichigo-01.ass").unwrap();
     extract_sound_clips("ichigo-01.mp3", "target", "ichigo-01", subtitles).unwrap();
   }
+
+  #[test]
   fn it_extracts_totoro() {
-    let subtitles = parse_subtitle_file("tests/totoro.ja.vtt").unwrap();
+    let subtitles = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
     extract_sound_clips("totoro.mp3", "target", "totoro", subtitles).unwrap();
   }
 
@@ -111,17 +113,14 @@ mod tests {
     // 00:04:52,470 --> 00:04:54,490
     let start = Time { hour: 0, min: 4, sec: 52, mil: 470 };
     let end = Time { hour: 0, min: 4, sec: 54, mil: 490 };
-    mp3.slice("target/output-1.mp3", start.milliseconds(), end.milliseconds()).unwrap();
+    mp3.slice("target/output-2.mp3", start.milliseconds(), end.milliseconds()).unwrap();
   }
 
   #[test]
   fn it_extracts_one_totoro_dialogue() {
-    let mut dialogue = parse_subtitle_file("tests/totoro.ja.vtt").unwrap();
-    assert_eq!(839, dialogue.len());
-    let one = dialogue.remove(26);
+    let mut subtitles = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
+    let one = subtitles.remove(50);
     let dialogue = vec![one];
     extract_sound_clips("totoro.mp3", "target", "totoro", dialogue).unwrap();
   }
-
-
 }

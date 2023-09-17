@@ -2,10 +2,12 @@ use std::{error, fmt, fs};
 use std::cmp::Ordering;
 
 use crate::assa::parse_assa_to_dialogue;
+use crate::subrip::parse_subrip_to_dialogue;
 use crate::webvtt::parse_webvtt_to_dialogue;
 
 mod assa;
 mod mp3;
+mod subrip;
 mod webvtt;
 pub mod ffmpeg;
 
@@ -81,6 +83,9 @@ pub fn parse_subtitle_file(path: &str) -> Option<Vec<Dialogue>> {
   if let Some(dialogue) = parse_webvtt_to_dialogue(&contents) {
     return Some(dialogue);
   }
+  if let Some(dialogue) = parse_subrip_to_dialogue(&contents) {
+    return Some(dialogue);
+  }
   None
 }
 
@@ -95,6 +100,7 @@ Vec<&'a Dialogue> {
 #[cfg(test)]
 mod tests {
   use crate::ffmpeg::{audio, snapshot};
+
   use super::*;
 
   #[test]

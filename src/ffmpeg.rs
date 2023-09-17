@@ -111,9 +111,7 @@ pub fn audio(video: &Path, start: &Time, end: &Time, output: String) -> std::io:
 
 #[cfg(test)]
 mod tests {
-  use assert_matches::assert_matches;
-
-  use crate::{find_secondary_matches, parse_subtitle_file};
+  use crate::parse_subtitle_file;
 
   use super::*;
 

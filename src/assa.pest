@@ -20,7 +20,7 @@ sec = { DECIMAL_NUMBER{2} }
 hun = { DECIMAL_NUMBER{2} }
 time = ${ hour ~ ":" ~ min ~ ":" ~ sec ~ "." ~ hun }
 
-dialogue_name = { (ASCII_ALPHANUMERIC | "_")+ }
+dialogue_name = { (ASCII_ALPHANUMERIC | "_")* }
 dialogue = { "Dialogue:" ~ number ~ "," ~ time ~ "," ~ time ~ "," ~ dialogue_name ~ "," ~ dialogue_name ~ "," ~ number ~ "," ~ number ~ "," ~ number ~ "," ~ effect ~ "," ~ value }
 
 events = _{ "[Events]" ~ NEWLINE ~ ((format | dialogue | contents) ~ NEWLINE)+ }

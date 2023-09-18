@@ -85,29 +85,38 @@ mod tests {
     let contents = fs::read_to_string("tests/ichigo-01.ass").unwrap();
     let file = parse_assa(&contents).unwrap();
     dump_rules(1, file.clone());
-    assert_eq!(file.clone().into_inner().len(), 370);
+    assert_eq!(370, file.clone().into_inner().len());
 
     let dialogue = assa_to_dialogue(file.clone(), vec![]);
-    assert_eq!(dialogue.len(), 350);
+    assert_eq!(350, dialogue.len());
   }
 
   #[test]
   fn it_parses_substation_secondary() {
     let contents = fs::read_to_string("tests/ichigo-01_en.ass").unwrap();
     let file = parse_assa(&contents).unwrap();
-    assert_eq!(file.clone().into_inner().len(), 557);
+    assert_eq!(557, file.clone().into_inner().len());
 
     let dialogue = assa_to_dialogue(file.clone(), vec![]);
-    assert_eq!(dialogue.len(), 359);
+    assert_eq!(360, dialogue.len());
+  }
+
+  #[test]
+  fn it_parses_totoro() {
+    let contents = fs::read_to_string("tests/totoro.en.ass").unwrap();
+    let file = parse_assa(&contents).unwrap();
+    assert_eq!(659, file.clone().into_inner().len());
+    let dialogue = assa_to_dialogue(file.clone(), vec![]);
+    assert_eq!(551, dialogue.len());
   }
 
   #[test]
   fn it_matches_secondary_subtitle() {
     let primary = parse_subtitle_file("tests/ichigo-01.ass").unwrap();
-    assert_eq!(primary.len(), 350);
+    assert_eq!(350, primary.len());
     let first = primary.first().unwrap();
     let secondary = parse_subtitle_file("tests/ichigo-01_en.ass").unwrap();
-    assert_eq!(secondary.len(), 359);
+    assert_eq!(360, secondary.len());
     let second = find_secondary_matches(first, &secondary);
     assert_matches!(second.first(), Some(Dialogue {text, .. }) if text == "What lovely weather.");
     let last = primary.last().unwrap();

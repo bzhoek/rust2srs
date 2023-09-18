@@ -36,7 +36,6 @@ pub fn extract_dialogue(video_file: &str, folder: &str, prefix: &str, source: Ve
       while video.receive_frame(&mut decoded).is_ok() {
         let timestamp = decoded.timestamp().unwrap();
         let timestamp = Time::from_nanos(timestamp as u64);
-        println!("Time {}", timestamp);
         if timestamp.milliseconds() > half.milliseconds() {
           let snapshot_file = format!("{}/{}_{}", folder, prefix, half.dot());
           println!("Saving {}", snapshot_file);
@@ -126,8 +125,25 @@ mod tests {
 
   #[test]
   fn it_extracts_images() {
-    let dialogue = parse_subtitle_file("tests/totoro.ja.vtt").unwrap();
-    assert_eq!(839, dialogue.len());
-    extract_dialogue("totoro-rs.mkv", "target", "totoro", dialogue).unwrap();
+    let dialogue = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
+    extract_dialogue("totoro.mkv", "target", "totoro", dialogue).unwrap();
+  }
+
+  #[test]
+  fn it_runs_ffmpeg() -> Result<()> {
+    let start = Time { hour: 0, min: 1, sec: 39, mil: 620 };
+    let end = Time { hour: 0, min: 1, sec: 41, mil: 620 };
+    let half = start.half_way(&end);
+    let video = "ichigo-01.mkv";
+
+    let output = format!("test.{}-{}.mp3", start.dot(), end.dot());
+    let status = audio(video.as_ref(), &start, &end, output)?;
+    assert!(status.success());
+
+    let output = format!("test.{}.jpg", half.dot());
+    let status = snapshot(video.as_ref(), half, output)?;
+    assert!(status.success());
+
+    Ok(())
   }
 }

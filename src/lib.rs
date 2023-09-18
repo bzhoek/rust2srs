@@ -26,6 +26,13 @@ impl fmt::Display for Dialogue {
   }
 }
 
+impl Dialogue {
+  fn overlaps(&self, other: &Dialogue) -> bool {
+    (self.start >= other.start && self.start <= other.end) ||
+      (other.start > self.start && other.start < self.end)
+  }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Time {
   hour: u8,
@@ -92,15 +99,31 @@ pub fn parse_subtitle_file(path: &str) -> Option<Vec<Dialogue>> {
 pub fn find_secondary_matches<'a>(dialogue: &'a Dialogue, secondary: &'a Vec<Dialogue>) ->
 Vec<&'a Dialogue> {
   secondary
-    .iter().filter(
-    |second| second.start >= dialogue.start && second.start < dialogue.end)
+    .iter().filter(|second| dialogue.overlaps(second))
     .collect()
+}
+
+pub fn generate_tab_separated(primary: Vec<Dialogue>, secondary: Vec<Dialogue>, prefix: &str,
+                              file: &str) {
+  for first in primary.iter() {
+    let half = first.start.half_way(&first.end);
+
+    let second = find_secondary_matches(first, &secondary);
+    let text = first.text
+      .replace("\\N", " ")
+      .replace("\\n", " ");
+    let second: String = second.iter().map(|d| d.text.clone()).collect::<Vec<_>>().join(" ")
+      .replace("\\N", " ")
+      .replace("\\n", " ");
+    let id = format!("{}_{}", prefix, half);
+    let sound = format!("[sound:{}_{}-{}.mp3]", prefix, first.start, first.end);
+    let image = format!("<img src=\"{}_{}.jpg\">", prefix, half.dot());
+    println!("{}\t{}\t{}\t{}\t{}\t{}", prefix, id, sound, image, text, second);
+  }
 }
 
 #[cfg(test)]
 mod tests {
-  use crate::ffmpeg::{audio, snapshot};
-
   use super::*;
 
   #[test]
@@ -135,26 +158,17 @@ mod tests {
   }
 
   #[test]
-  fn it_runs_ffmpeg() -> Result<()> {
-    let start = Time { hour: 0, min: 1, sec: 39, mil: 620 };
-    let end = Time { hour: 0, min: 1, sec: 41, mil: 620 };
-    let half = start.half_way(&end);
-    let video = "ichigo-01.mkv";
-
-    let output = format!("test.{}-{}.mp3", start.dot(), end.dot());
-    let status = audio(video.as_ref(), &start, &end, output)?;
-    assert!(status.success());
-
-    let output = format!("test.{}.jpg", half.dot());
-    let status = snapshot(video.as_ref(), half, output)?;
-    assert!(status.success());
-
-    Ok(())
-  }
-
-  #[test]
   fn it_converts_nanos() {
     let time = Time::from_nanos(1451951);
     assert_eq!("0.24.11.951", format!("{}", time))
+  }
+
+  #[test]
+  fn it_generates_tab_separated() {
+    let primary = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
+    let jp = primary.get(50).unwrap();
+    let secondary = parse_subtitle_file("tests/totoro.en.ass").unwrap();
+    assert_eq!(551, secondary.len());
+    generate_tab_separated(primary, secondary, "totoro", "target/totoro.tsv");
   }
 }

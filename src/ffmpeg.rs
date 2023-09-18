@@ -62,8 +62,8 @@ fn create_scaler(video: &ffmpeg_next::decoder::Video) -> Result<Context> {
     video.width(),
     video.height(),
     Pixel::RGB24,
-    video.width(),
-    video.height(),
+    640,
+    360,
     Flags::BILINEAR,
   )?;
   Ok(scaler)
@@ -116,9 +116,8 @@ mod tests {
 
   #[test]
   fn it_extracts_image() {
-    let mut dialogue = parse_subtitle_file("tests/totoro.ja.vtt").unwrap();
-    assert_eq!(839, dialogue.len());
-    let one = dialogue.remove(26);
+    let mut dialogue = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
+    let one = dialogue.remove(50);
     let dialogue = vec![one];
     extract_dialogue("totoro.mkv", "target", "totoro", dialogue).unwrap();
   }

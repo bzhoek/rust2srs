@@ -1,5 +1,8 @@
 # Pest based Substation Alpha parser
 
+Rust based implementation of [subs2srs](https://subs2srs.sourceforge.net/) to generate [mass immersion]
+(https://refold.la/mia/) content.
+
 ```sh
 brew install ffmpeg
 ```

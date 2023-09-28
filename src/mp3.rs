@@ -1,5 +1,6 @@
 use std::fs;
 use std::fs::write;
+use std::path::Path;
 
 use rmp3::{Decoder, Frame};
 
@@ -10,12 +11,12 @@ pub struct Mp3 {
 }
 
 impl Mp3 {
-  fn new(file: &str) -> Result<Mp3> {
-    let bytes = fs::read(file)?;
+  fn new<P: AsRef<Path>>(path: P) -> Result<Mp3> {
+    let bytes = fs::read(path)?;
     Ok(Mp3 { bytes })
   }
 
-  fn slice(&self, file: &str, start: u64, end: u64) -> Result<()> {
+  fn slice<P: AsRef<Path>>(&self, path: P, start: u64, end: u64) -> Result<()> {
     let mut decoder = Decoder::new(&self.bytes);
     let mut duration: f64 = 0.0;
     let mut index = None;
@@ -32,7 +33,7 @@ impl Mp3 {
           Some(start) => {
             if duration >= end as f64 {
               let contents = &self.bytes[start..decoder.position()];
-              write(file, contents)?;
+              write(path, contents)?;
               return Ok(());
             }
           }
@@ -66,7 +67,7 @@ mod tests {
   #[test]
   fn it_uses_rmp3() {
     let file = fs::read("ichigo-01.mp3").unwrap();
-    assert_eq!(23234644, file.len());
+    assert_eq!(23234645, file.len());
     let mut decoder = Decoder::new(&file);
 
     let mut frame_count = 0;

@@ -83,7 +83,7 @@ mod tests {
 
   #[test]
   fn it_parses_substation() {
-    let contents = fs::read_to_string("tests/ichigo-01.ass").unwrap();
+    let contents = fs::read_to_string("tests/ichigo-01_jp.ass").unwrap();
     let file = parse_assa(&contents).unwrap();
     dump_rules(1, file.clone());
     assert_eq!(370, file.clone().into_inner().len());
@@ -113,7 +113,7 @@ mod tests {
 
   #[test]
   fn it_matches_secondary_subtitle() {
-    let primary = parse_subtitle_file("tests/ichigo-01.ass").unwrap();
+    let primary = parse_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
     assert_eq!(350, primary.len());
     let first = primary.first().unwrap();
     let secondary = parse_subtitle_file("tests/ichigo-01_en.ass").unwrap();
@@ -128,7 +128,7 @@ mod tests {
 
   #[test]
   fn it_matches_multiple_lines() {
-    let primary = parse_subtitle_file("tests/ichigo-01.ass").unwrap();
+    let primary = parse_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
     let first = primary.get(4).unwrap();
     let secondary = parse_subtitle_file("tests/ichigo-01_en.ass").unwrap();
     let second = find_secondary_matches(first, &secondary);
@@ -140,7 +140,7 @@ mod tests {
 
   #[test]
   fn it_generates_tab_separated() {
-    let primary = parse_subtitle_file("tests/ichigo-01.ass").unwrap();
+    let primary = parse_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
     let secondary = parse_subtitle_file("tests/ichigo-01_en.ass").unwrap();
     for first in primary.iter() {
       let second = find_secondary_matches(first, &secondary);

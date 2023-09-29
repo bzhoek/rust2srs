@@ -42,6 +42,6 @@ ffmpeg -i totoro.mkv    -map 0:1 -b:a 128k -acodec libmp3lame totoro.mp3
 ffmpeg -i ichigo-01.mkv -s 640x360 -c:a copy     output.mkv
 ffmpeg -i totoro.mkv    -s 640x360 -c:a copy -an totoro-rs.mkv # without audio
 
-target/debug/rust2srs -v output.mkv -s tests/ichigo-01.ass -t  -p ichigo-1 -o  10352.79s user 1076.09s system 787% cpu 24:10.59 total # resized
-target/debug/rust2srs -v output.mkv -s tests/ichigo-01.ass -t  -p ichigo-1 -o  11185.47s user 1242.84s system 777% cpu 26:38.03 total # alleen snapshots
+target/debug/rust2srs -v output.mkv -s tests/ichigo-01_jp.ass -t  -p ichigo-1 -o  10352.79s user 1076.09s system 787% cpu 24:10.59 total # resized
+target/debug/rust2srs -v output.mkv -s tests/ichigo-01_jp.ass -t  -p ichigo-1 -o  11185.47s user 1242.84s system 777% cpu 26:38.03 total # alleen snapshots
 ```

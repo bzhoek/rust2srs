@@ -98,7 +98,7 @@ mod tests {
 
   #[test]
   fn it_slices_ichigo() {
-    let subtitles = parse_subtitle_file("tests/ichigo-01.ass").unwrap();
+    let subtitles = parse_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
     extract_sound_clips("ichigo-01.mp3", "target", "ichigo-01", subtitles).unwrap();
   }
 

@@ -73,10 +73,11 @@ fn dump_rules(level: usize, pair: Pair<Rule>) {
 #[cfg(test)]
 mod tests {
   use std::fs;
+
   use assert_matches::assert_matches;
 
-  use crate::assa::parse_assa;
   use crate::{find_secondary_matches, parse_subtitle_file};
+  use crate::assa::parse_assa;
 
   use super::*;
 
@@ -121,7 +122,7 @@ mod tests {
     assert_matches!(second.first(), Some(Dialogue {text, .. }) if text == "What lovely weather.");
     let last = primary.last().unwrap();
     let second = find_secondary_matches(last, &secondary);
-    assert_matches!(second.first(), Some(Dialogue {text, .. }) if text == "Uh, like what?");
+    assert_matches!(second.last(), Some(Dialogue {text, .. }) if text == "Uh, like what?");
   }
 
 

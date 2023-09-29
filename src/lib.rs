@@ -97,14 +97,13 @@ pub fn parse_subtitle_file(path: &str) -> Option<Vec<Dialogue>> {
 }
 
 pub fn find_secondary_matches<'a>(dialogue: &'a Dialogue, secondary: &'a Vec<Dialogue>) ->
-Vec<&'a Dialogue> {
+                                                                                        Vec<&'a Dialogue> {
   secondary
     .iter().filter(|second| dialogue.overlaps(second))
     .collect()
 }
 
-pub fn generate_tab_separated(primary: Vec<Dialogue>, secondary: Vec<Dialogue>, prefix: &str,
-                              file: &str) {
+pub fn generate_tab_separated(primary: Vec<Dialogue>, secondary: Vec<Dialogue>, prefix: &str) {
   for first in primary.iter() {
     let half = first.start.half_way(&first.end);
 
@@ -166,9 +165,8 @@ mod tests {
   #[test]
   fn it_generates_tab_separated() {
     let primary = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
-    let jp = primary.get(50).unwrap();
     let secondary = parse_subtitle_file("tests/totoro.en.ass").unwrap();
     assert_eq!(551, secondary.len());
-    generate_tab_separated(primary, secondary, "totoro", "target/totoro.tsv");
+    generate_tab_separated(primary, secondary, "totoro");
   }
 }

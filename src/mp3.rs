@@ -45,7 +45,7 @@ impl Mp3 {
   }
 }
 
-pub fn extract_sound_clips(audio_file: &str, folder: &str, prefix: &str, subtitles: Vec<Dialogue>)
+pub fn extract_sound_clips(audio_file: &str, folder: &str, prefix: &str, subtitles: &Vec<Dialogue>)
                            -> Result<()> {
   let mp3 = Mp3::new(audio_file)?;
   for dialogue in subtitles {
@@ -99,13 +99,13 @@ mod tests {
   #[test]
   fn it_slices_ichigo() {
     let subtitles = parse_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
-    extract_sound_clips("ichigo-01.mp3", "target", "ichigo-01", subtitles).unwrap();
+    extract_sound_clips("ichigo-01.mp3", "target", "ichigo-01", &subtitles).unwrap();
   }
 
   #[test]
   fn it_extracts_totoro() {
     let subtitles = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
-    extract_sound_clips("totoro.mp3", "target", "totoro", subtitles).unwrap();
+    extract_sound_clips("totoro.mp3", "target", "totoro", &subtitles).unwrap();
   }
 
   #[test]
@@ -122,6 +122,6 @@ mod tests {
     let mut subtitles = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
     let one = subtitles.remove(50);
     let dialogue = vec![one];
-    extract_sound_clips("totoro.mp3", "target", "totoro", dialogue).unwrap();
+    extract_sound_clips("totoro.mp3", "target", "totoro", &dialogue).unwrap();
   }
 }

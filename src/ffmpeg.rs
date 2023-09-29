@@ -12,7 +12,7 @@ use jpeg_encoder::{ColorType, Encoder};
 use crate::{Dialogue, Time};
 use crate::Result;
 
-pub fn extract_dialogue(video_file: &str, folder: &str, prefix: &str, source: Vec<Dialogue>)
+pub fn extract_screenshots(video_file: &str, folder: &str, prefix: &str, subtitles: &[Dialogue])
                         -> Result<()> {
   ffmpeg_next::init().unwrap();
   if let Ok(mut input) = input(&video_file) {
@@ -24,7 +24,7 @@ pub fn extract_dialogue(video_file: &str, folder: &str, prefix: &str, source: Ve
     let mut video = context.decoder().video()?;
     let mut scaler = create_scaler(&video)?;
 
-    let mut dialogues = source.into_iter();
+    let mut dialogues = subtitles.iter();
     let mut dialogue = dialogues.next().unwrap();
     let mut half = dialogue.start.half_way(&dialogue.end);
 
@@ -119,13 +119,13 @@ mod tests {
     let mut dialogue = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
     let one = dialogue.remove(50);
     let dialogue = vec![one];
-    extract_dialogue("totoro.mkv", "target", "totoro", dialogue).unwrap();
+    extract_screenshots("totoro.mkv", "target", "totoro", &dialogue).unwrap();
   }
 
   #[test]
   fn it_extracts_images() {
     let dialogue = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
-    extract_dialogue("totoro.mkv", "target", "totoro", dialogue).unwrap();
+    extract_screenshots("totoro.mkv", "target", "totoro", &dialogue).unwrap();
   }
 
   #[test]

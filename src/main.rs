@@ -5,7 +5,8 @@ use std::path::PathBuf;
 use clap::{arg, Command, value_parser};
 
 use ::rust2srs::Result;
-use rust2srs::ffmpeg::extract_dialogue;
+use rust2srs::ffmpeg::extract_screenshots;
+use rust2srs::mp3::extract_sound_clips;
 use rust2srs::parse_subtitle_file;
 
 fn main() -> Result<()> {
@@ -42,6 +43,7 @@ fn main() -> Result<()> {
   let prefix = matches.get_one::<String>("prefix").unwrap();
   let source = parse_subtitle_file(source).expect("Unrecognized subtitle format");
 
-  extract_dialogue(video_file, folder, prefix, source)?;
+  extract_screenshots(video_file, folder, prefix, &source)?;
+  extract_sound_clips(video_file, folder, prefix, &source)?;
   Ok(())
 }

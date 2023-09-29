@@ -6,7 +6,7 @@ use crate::subrip::parse_subrip_to_dialogue;
 use crate::webvtt::parse_webvtt_to_dialogue;
 
 mod assa;
-mod mp3;
+pub mod mp3;
 mod subrip;
 mod webvtt;
 pub mod ffmpeg;
@@ -96,8 +96,8 @@ pub fn parse_subtitle_file(path: &str) -> Option<Vec<Dialogue>> {
   None
 }
 
-pub fn find_secondary_matches<'a>(dialogue: &'a Dialogue, secondary: &'a Vec<Dialogue>) ->
-                                                                                        Vec<&'a Dialogue> {
+pub fn find_secondary_matches<'a>(dialogue: &'a Dialogue, secondary: &'a [Dialogue]) ->
+                                                                                     Vec<&'a Dialogue> {
   secondary
     .iter().filter(|second| dialogue.overlaps(second))
     .collect()

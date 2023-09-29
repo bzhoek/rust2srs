@@ -37,7 +37,7 @@ fn subrip_to_dialogue(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue
         let end: Time = inner.next().unwrap().into();
         let payload = inner.next().unwrap();
         let text = payload.into_inner().next().unwrap().as_str()
-          .to_string().replace("\n", "<br/>");
+          .to_string().replace('\n', "<br/>");
         let dialogue = Dialogue { start, end, text };
         list.push(dialogue);
       }

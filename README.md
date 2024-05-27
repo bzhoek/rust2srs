@@ -15,13 +15,19 @@ brew install ffmpeg
 * https://gitlab.com/anthony-tron/mp3cut
 * http://www.tcax.org/docs/ass-specs.htm
 * https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API
+
+## Netflix subtitles
+
+Violentmonkey plug-in that adds a `Netflix subtitle downloader` menu to the top of the screen on netflix.com.
+
 * https://greasyfork.org/en/scripts/26654-netflix-subtitle-downloader
 
-
 ## Subtitles
-Substation Alpha (SSA) supports formatting, animation and karaoke. V4+ (ASS) is the advanced newer version. 
+
+Substation Alpha (SSA) supports formatting, animation and karaoke. V4+ (ASS) is the advanced newer version.
 
 ## fmpeg
+
 `-y` overwrite. Get progressively slower as it seeks to the correct timestamp.
 
 ```sh
@@ -31,11 +37,14 @@ ffmpeg -i ichigo-01.mkv -ss 0:01:39.62 -to 0:01:41.62 -y output.mp3
 ```
 
 ### Audio
+
 https://www.baeldung.com/linux/ffmpeg-audio-from-video
+
 ```sh
 ffmpeg -i ichigo-01.mkv -map 0:1 -b:a 128k -acodec libmp3lame ichigo-01.mp3
 ffmpeg -i totoro.mkv    -map 0:1 -b:a 128k -acodec libmp3lame totoro.mp3
 ```
+
 ### Resize
 
 ```sh

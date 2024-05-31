@@ -7,15 +7,6 @@ Rust based implementation of [subs2srs](https://subs2srs.sourceforge.net/) to ge
 brew install ffmpeg
 ```
 
-* https://pest.rs/book/
-* https://blog.logrocket.com/building-rust-parser-pest-peg/
-* https://gist.github.com/cetra3/eafaf107252d7b3845d9fd0363f08cf7
-* https://blog.logrocket.com/decoding-encoding-images-rust-using-image-crate/
-* https://github.com/zmwangx/rust-ffmpeg
-* https://gitlab.com/anthony-tron/mp3cut
-* http://www.tcax.org/docs/ass-specs.htm
-* https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API
-
 ## Netflix subtitles
 
 Violentmonkey plug-in that adds a `Netflix subtitle downloader` menu to the top of the screen on netflix.com.
@@ -54,3 +45,14 @@ ffmpeg -i totoro.mkv    -s 640x360 -c:a copy -an totoro-rs.mkv # without audio
 target/debug/rust2srs -v output.mkv -s tests/ichigo-01_jp.ass -t  -p ichigo-1 -o  10352.79s user 1076.09s system 787% cpu 24:10.59 total # resized
 target/debug/rust2srs -v output.mkv -s tests/ichigo-01_jp.ass -t  -p ichigo-1 -o  11185.47s user 1242.84s system 777% cpu 26:38.03 total # alleen snapshots
 ```
+
+## Reference
+
+* https://pest.rs/book/
+* https://blog.logrocket.com/building-rust-parser-pest-peg/
+* https://gist.github.com/cetra3/eafaf107252d7b3845d9fd0363f08cf7
+* https://blog.logrocket.com/decoding-encoding-images-rust-using-image-crate/
+* https://github.com/zmwangx/rust-ffmpeg
+* https://gitlab.com/anthony-tron/mp3cut
+* http://www.tcax.org/docs/ass-specs.htm
+* https://developer.mozilla.org/en-US/docs/Web/API/WebVTT_API

@@ -2,6 +2,8 @@
 name = "rust2srs"
 version = "0.1.0"
 edition = "2021"
+authors = ["Bas van der Hoek <bas@hoek.com>"]
+description = "A tool to create Anki cards from videos with subtitles"
 
 [dependencies]
 clap = "4.4.2"

@@ -17,7 +17,7 @@ Violentmonkey plug-in that adds a `Netflix subtitle downloader` menu to the top 
 
 Substation Alpha (SSA) supports formatting, animation and karaoke. V4+ (ASS) is the advanced newer version.
 
-## fmpeg
+## ffmpeg
 
 `-y` overwrite. Get progressively slower as it seeks to the correct timestamp.
 
@@ -29,11 +29,13 @@ ffmpeg -i ichigo-01.mkv -ss 0:01:39.62 -to 0:01:41.62 -y output.mp3
 
 ### Audio
 
-https://www.baeldung.com/linux/ffmpeg-audio-from-video
+Extract [audio](https://www.baeldung.com/linux/ffmpeg-audio-from-video) with:
 
 ```sh
 ffmpeg -i ichigo-01.mkv -map 0:1 -b:a 128k -acodec libmp3lame ichigo-01.mp3
 ffmpeg -i totoro.mkv    -map 0:1 -b:a 128k -acodec libmp3lame totoro.mp3
+# slow down
+ffmpeg -i ichigo-02_00137.mp3 -filter:a "atempo=0.8" -vn ichigo-slow.mp3
 ```
 
 ### Resize

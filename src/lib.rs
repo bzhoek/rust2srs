@@ -1,5 +1,7 @@
 use std::{error, fmt, fs};
 use std::cmp::Ordering;
+use std::fs::File;
+use std::io::Write;
 
 use crate::assa::parse_assa_to_dialogue;
 use crate::subrip::parse_subrip_to_dialogue;
@@ -43,7 +45,7 @@ pub struct Time {
 
 impl fmt::Display for Time {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "{}.{:02}.{:02}.{:03}", self.hour, self.min, self.sec, self.mil)
+    write!(f, "{}{:02}{:02}", self.hour, self.min, self.sec)
   }
 }
 
@@ -72,8 +74,8 @@ impl Time {
     Time::from_nanos(half)
   }
 
-  pub fn dot(&self) -> String {
-    format!("{}.{:02}.{:02}.{:03}", self.hour, self.min, self.sec, self.mil)
+  pub fn hms(&self) -> String {
+    format!("{}{:02}{:02}", self.hour, self.min, self.sec)
   }
 
   fn colon(&self) -> String {
@@ -97,13 +99,14 @@ pub fn parse_subtitle_file(path: &str) -> Option<Vec<Dialogue>> {
 }
 
 pub fn find_secondary_matches<'a>(dialogue: &'a Dialogue, secondary: &'a [Dialogue]) ->
-                                                                                     Vec<&'a Dialogue> {
+Vec<&'a Dialogue> {
   secondary
     .iter().filter(|second| dialogue.overlaps(second))
     .collect()
 }
 
 pub fn generate_tab_separated(primary: Vec<Dialogue>, secondary: Vec<Dialogue>, prefix: &str) {
+  let writer = File::create(format!("{}-anki.tsv", prefix)).unwrap();
   for first in primary.iter() {
     let half = first.start.half_way(&first.end);
 
@@ -116,8 +119,8 @@ pub fn generate_tab_separated(primary: Vec<Dialogue>, secondary: Vec<Dialogue>, 
       .replace("\\n", " ");
     let id = format!("{}_{}", prefix, half);
     let sound = format!("[sound:{}_{}-{}.mp3]", prefix, first.start, first.end);
-    let image = format!("<img src=\"{}_{}.jpg\">", prefix, half.dot());
-    println!("{}\t{}\t{}\t{}\t{}\t{}", prefix, id, sound, image, text, second);
+    let image = format!("<img src=\"{}_{}.jpg\">", prefix, half.hms());
+    writeln!(&writer, "{}\t{}\t{}\t{}\t{}\t{}", prefix, id, sound, image, text, second).unwrap();
   }
 }
 

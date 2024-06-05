@@ -1,49 +1,78 @@
 extern crate ffmpeg_next as ffmpeg;
 
-use std::path::PathBuf;
-
-use clap::{arg, Command, value_parser};
+use clap::{Parser, Subcommand};
+use clap::arg;
+use env_logger::Env;
+use env_logger::Target::Stdout;
+use log::debug;
 
 use ::rust2srs::Result;
 use rust2srs::ffmpeg::extract_screenshots;
-use rust2srs::mp3::extract_sound_clips;
-use rust2srs::parse_subtitle_file;
+use rust2srs::mp3::{AudioSuffix, extract_sound_clips};
+use rust2srs::{generate_tab_separated, parse_subtitle_file};
+
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {
+  /// Source language subtitles
+  #[arg(short, long)]
+  source: String,
+
+  /// Output folder
+  #[arg(short, long)]
+  output: String,
+
+  /// Prefix folder
+  #[arg(short, long)]
+  prefix: String,
+
+  /// Verbose logging
+  #[arg(short, long, default_value = "false")]
+  verbose: bool,
+
+  #[command(subcommand)]
+  command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+  Video {
+    /// Media file
+    #[arg(short, long)]
+    video: String,
+  },
+  Audio {
+    /// Media file
+    #[arg(short, long)]
+    audio: String,
+  },
+  Anki {
+    /// Source language subtitles
+    #[arg(short, long)]
+    target: String,
+  },
+}
 
 fn main() -> Result<()> {
-  let matches = Command::new("rust2srs")
-    .arg(
-      arg!(-v --video <FILE> "Video file")
-        .required(true)
-        .value_parser(value_parser!(PathBuf)),
-    )
-    .arg(
-      arg!(-s --source <FILE> "Subtitle in source language")
-        .required(true)
-        .value_parser(value_parser!(PathBuf)),
-    )
-    .arg(
-      arg!(-t --target <FILE> "Subtitle in target language")
-        .required(true)
-        .value_parser(value_parser!(PathBuf)),
-    )
-    .arg(
-      arg!(-o --output <FOLDER> "Folder to save output to")
-        .required(true)
-    )
-    .arg(
-      arg!(-p --prefix <TEXT> "Prefix for output files")
-        .required(true)
-    )
-    .get_matches();
+  let args = Cli::parse();
+  let level = if args.verbose { "debug" } else { "info" };
+  env_logger::Builder::from_env(
+    Env::default().default_filter_or(level)
+  ).target(Stdout).init();
+  debug!("Verbose logging");
 
-  let video_file = matches.get_one::<String>("video").unwrap();
-  let source = matches.get_one::<String>("source").unwrap();
-  let folder = matches.get_one::<String>("output").unwrap();
-  let _target = matches.get_one::<PathBuf>("target").unwrap();
-  let prefix = matches.get_one::<String>("prefix").unwrap();
-  let source = parse_subtitle_file(source).expect("Unrecognized subtitle format");
-
-  extract_screenshots(video_file, folder, prefix, &source)?;
-  extract_sound_clips(video_file, folder, prefix, &source)?;
+  let source = parse_subtitle_file(&args.source).expect("Unrecognized subtitle format");
+  match args.command {
+    Commands::Video { video } => {
+      extract_screenshots(&video, &args.output, &args.prefix, &source)?;
+    }
+    Commands::Audio { audio } => {
+      extract_sound_clips(&audio, &args.output, &args.prefix, &source, AudioSuffix::None)?;
+    }
+    Commands::Anki { target } => {
+      let target = parse_subtitle_file(&target).expect("Unrecognized subtitle format");
+      generate_tab_separated(source, target, &args.prefix);
+    }
+  }
   Ok(())
 }

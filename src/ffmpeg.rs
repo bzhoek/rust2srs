@@ -8,13 +8,16 @@ use ffmpeg_next::media::Type;
 use ffmpeg_next::software::scaling::{context::Context, flag::Flags};
 use ffmpeg_next::util::frame::video::Video;
 use jpeg_encoder::{ColorType, Encoder};
+use log::info;
 
 use crate::{Dialogue, Time};
 use crate::Result;
 
 pub fn extract_screenshots(video_file: &str, folder: &str, prefix: &str, subtitles: &[Dialogue])
-                        -> Result<()> {
+                           -> Result<()> {
   ffmpeg_next::init().unwrap();
+  info!("Extracting screenshots from {}", video_file);
+
   if let Ok(mut input) = input(&video_file) {
     let stream = input
       .streams()
@@ -37,8 +40,8 @@ pub fn extract_screenshots(video_file: &str, folder: &str, prefix: &str, subtitl
         let timestamp = decoded.timestamp().unwrap();
         let timestamp = Time::from_nanos(timestamp as u64);
         if timestamp.milliseconds() > half.milliseconds() {
-          let snapshot_file = format!("{}/{}_{}", folder, prefix, half.dot());
-          println!("Saving {}", snapshot_file);
+          let snapshot_file = format!("{}/{}_{}", folder, prefix, dialogue.start.hms());
+          info!("Saving {}", snapshot_file);
           let mut rgb_frame = Video::empty();
           scaler.run(&decoded, &mut rgb_frame)?;
           save_snapshot(&rgb_frame, snapshot_file.clone()).unwrap();
@@ -53,6 +56,7 @@ pub fn extract_screenshots(video_file: &str, folder: &str, prefix: &str, subtitl
       }
     }
   }
+  info!("Done!");
   Ok(())
 }
 
@@ -135,11 +139,11 @@ mod tests {
     let half = start.half_way(&end);
     let video = "ichigo-01.mkv";
 
-    let output = format!("test.{}-{}.mp3", start.dot(), end.dot());
+    let output = format!("test.{}-{}.mp3", start.hms(), end.hms());
     let status = audio(video.as_ref(), &start, &end, output)?;
     assert!(status.success());
 
-    let output = format!("test.{}.jpg", half.dot());
+    let output = format!("test.{}.jpg", half.hms());
     let status = snapshot(video.as_ref(), half, output)?;
     assert!(status.success());
 

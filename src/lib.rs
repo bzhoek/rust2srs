@@ -32,7 +32,8 @@ impl fmt::Display for Dialogue {
 
 impl Dialogue {
   fn overlaps(&self, other: &Dialogue) -> bool {
-    (self.start >= other.start && self.start <= other.end) ||
+    // (self.start >= other.start && self.start <= other.end) || TODO: remove or parameterize
+    (self.start >= other.start && self.start < other.end) ||
       (other.start > self.start && other.start < self.end)
   }
 }

@@ -2,8 +2,10 @@ use std::{error, fmt, fs};
 use std::cmp::Ordering;
 use std::fs::File;
 use std::io::Write;
+use log::info;
 
 use crate::assa::parse_assa_to_dialogue;
+use crate::mp3::AudioSuffix;
 use crate::subrip::parse_subrip_to_dialogue;
 use crate::webvtt::parse_webvtt_to_dialogue;
 
@@ -105,8 +107,11 @@ Vec<&'a Dialogue> {
     .collect()
 }
 
-pub fn generate_tab_separated(primary: Vec<Dialogue>, secondary: Vec<Dialogue>, prefix: &str) {
-  let writer = File::create(format!("{}-anki.tsv", prefix)).unwrap();
+pub fn generate_tab_separated(primary: Vec<Dialogue>, secondary: Vec<Dialogue>, output: &str, prefix: &str, suffix: AudioSuffix) {
+  let filename = format!("{}/{}-anki.tsv", output, prefix);
+  info!("Writing to {}", filename);
+
+  let writer = File::create(&filename).unwrap();
   for first in primary.iter() {
     let half = first.start.half_way(&first.end);
 
@@ -117,9 +122,21 @@ pub fn generate_tab_separated(primary: Vec<Dialogue>, secondary: Vec<Dialogue>, 
     let second: String = second.iter().map(|d| d.text.clone()).collect::<Vec<_>>().join(" ")
       .replace("\\N", " ")
       .replace("\\n", " ");
-    let id = format!("{}_{}", prefix, half);
-    let sound = format!("[sound:{}_{}-{}.mp3]", prefix, first.start, first.end);
-    let image = format!("<img src=\"{}_{}.jpg\">", prefix, half.hms());
+
+    let (id, sound, image) = match suffix {
+      AudioSuffix::None => {
+        let id = format!("{}_{}", prefix, first.start);
+        let sound = format!("[sound:{}_{}.mp3]", prefix, first.start);
+        let image = format!("<img src=\"{}_{}.jpg\">", prefix, first.start.hms());
+        (id, sound, image)
+      }
+      AudioSuffix::EndTime => {
+        let id = format!("{}_{}", prefix, half);
+        let sound = format!("[sound:{}_{}-{}.mp3]", prefix, first.start, first.end);
+        let image = format!("<img src=\"{}_{}.jpg\">", prefix, half.hms());
+        (id, sound, image)
+      }
+    };
     writeln!(&writer, "{}\t{}\t{}\t{}\t{}\t{}", prefix, id, sound, image, text, second).unwrap();
   }
 }
@@ -170,6 +187,6 @@ mod tests {
     let primary = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
     let secondary = parse_subtitle_file("tests/totoro.en.ass").unwrap();
     assert_eq!(551, secondary.len());
-    generate_tab_separated(primary, secondary, "totoro");
+    generate_tab_separated(primary, secondary, "target", "totoro", AudioSuffix::EndTime);
   }
 }

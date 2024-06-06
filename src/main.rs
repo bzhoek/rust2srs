@@ -71,7 +71,7 @@ fn main() -> Result<()> {
     }
     Commands::Anki { target } => {
       let target = parse_subtitle_file(&target).expect("Unrecognized subtitle format");
-      generate_tab_separated(source, target, &args.prefix);
+      generate_tab_separated(source, target, &args.output, &args.prefix, AudioSuffix::None);
     }
   }
   Ok(())

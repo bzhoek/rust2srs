@@ -7,6 +7,12 @@ Rust based implementation of [subs2srs](https://subs2srs.sourceforge.net/) to ge
 brew install ffmpeg
 ```
 
+## Usage
+
+```sh
+rust2srs -s ichigo-02-jp.ass -p ichigo-02 -o test anki -t ichigo-02-en.ass
+
+```
 ## Netflix subtitles
 
 Violentmonkey plug-in that adds a `Netflix subtitle downloader` menu to the top of the screen on netflix.com.
@@ -16,6 +22,12 @@ Violentmonkey plug-in that adds a `Netflix subtitle downloader` menu to the top 
 ## Subtitles
 
 Substation Alpha (SSA) supports formatting, animation and karaoke. V4+ (ASS) is the advanced newer version.
+
+Add subtitles to a new stream with:
+
+```sh
+ffmpeg -i in.mkv -i subs.srt -map 0 -map 1 -c copy out.mkv
+```
 
 ## ffmpeg
 

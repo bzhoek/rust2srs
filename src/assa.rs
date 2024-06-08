@@ -33,10 +33,8 @@ fn assa_to_dialogue(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue> 
         let _effect = inner.next().unwrap();
         let text = inner.next().unwrap();
         let string = text.as_str().to_string();
-        if !string.starts_with("{\\") {
-          let dialogue = Dialogue { start, end, text: string };
-          list.push(dialogue);
-        }
+        let dialogue = Dialogue { start, end, text: string };
+        list.push(dialogue);
       }
       _ => {
         list = assa_to_dialogue(pair, list);
@@ -99,7 +97,7 @@ mod tests {
     assert_eq!(557, file.clone().into_inner().len());
 
     let dialogue = assa_to_dialogue(file.clone(), vec![]);
-    assert_eq!(360, dialogue.len());
+    assert_eq!(472, dialogue.len());
   }
 
   #[test]

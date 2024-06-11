@@ -32,14 +32,18 @@ Substation Alpha (SSA) supports formatting, animation and karaoke. V4+ (ASS) is 
 
 Add subtitles to a new stream with:
 ```sh
-ffmpeg -i in.mkv -i subs.srt -map 0 -map 1 -c copy out.mkv
+ffmpeg -i input.mkv -i subs.srt -map 0 -map 1 -c copy output.mkv
 ```
 
 ### Audio
 
 Extract [audio](https://www.baeldung.com/linux/ffmpeg-audio-from-video) with:
 ```sh
-ffmpeg -i totoro.mkv    -map 0:1 -b:a 128k -acodec libmp3lame totoro.mp3
+ffmpeg -i input.mkv    -map 0:1 -b:a 128k -acodec libmp3lame output.mp3
+# trim and concat
+ffmpeg -i input.mp3 -ss 90    -to 10:55 -acodec copy output1.mp3
+ffmpeg -i input.mp3 -ss 11:05 -to 22:10 -acodec copy output2.mp3
+ffmpeg -i "concat:output1.mp3|output2.mp3" -c copy output.mp3
 # slow down
 ffmpeg -i ichigo-02_00137.mp3 -filter:a "atempo=0.8" -vn ichigo-slow.mp3
 ```

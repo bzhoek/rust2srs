@@ -10,8 +10,17 @@ brew install ffmpeg
 ## Usage
 
 ```sh
-rust2srs -s ichigo-02-jp.ass -p ichigo-02 -o test anki -t ichigo-02-en.ass
+rust2srs -s ichigo-05-jp.ass -o output -p ichigo-05 video -v resized.mkv
+rust2srs -s ichigo-05-jp.ass -o output -p ichigo-05 audio -a resampled.mp3
+rust2srs -s ichigo-05-jp.ass -o output -p ichigo-05 anki  -t ichigo-05-en.ass
 ```
+
+### Process
+
+1. Re-encode for smaller screenshots
+2. Generate snapshots from subtitles
+3. Extract audio as MP3
+4. Generate soundclips from subtitles
 
 ## Netflix subtitles
 
@@ -39,7 +48,7 @@ ffmpeg -i input.mkv -i subs.srt -map 0 -map 1 -c copy output.mkv
 
 Extract [audio](https://www.baeldung.com/linux/ffmpeg-audio-from-video) with:
 ```sh
-ffmpeg -i input.mkv    -map 0:1 -b:a 128k -acodec libmp3lame output.mp3
+ffmpeg -i input.mkv    -map 0:1 -b:a 128k -acodec libmp3lame resampled.mp3
 # trim and concat
 ffmpeg -i input.mp3 -ss 90    -to 10:55 -acodec copy output1.mp3
 ffmpeg -i input.mp3 -ss 11:05 -to 22:10 -acodec copy output2.mp3
@@ -51,8 +60,8 @@ ffmpeg -i ichigo-02_00137.mp3 -filter:a "atempo=0.8" -vn ichigo-slow.mp3
 ### Resize
 
 ```sh
-ffmpeg -i input.mkv -s 640x360 -c:a copy     output.mkv
-ffmpeg -i input.mkv -s 640x360 -c:a copy -an silent.mkv # without audio
+ffmpeg -i input.mkv -s 640x360 -c:a copy     resized.mkv
+ffmpeg -i input.mkv -s 640x360 -c:a copy -an resized.mkv # without audio
 ```
 
 ## Manual

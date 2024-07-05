@@ -32,7 +32,7 @@ impl fmt::Display for Dialogue {
 
 impl Dialogue {
   fn overlaps(&self, other: &Dialogue) -> bool {
-    // (self.start >= other.start && self.start <= other.end) || TODO: remove or parameterize
+    // (self.start >= other.start && self.start <= other.end) || // TODO: remove or parameterize
     (self.start >= other.start && self.start < other.end) ||
       (other.start > self.start && other.start < self.end)
   }
@@ -118,9 +118,11 @@ pub fn generate_tab_separated(primary: Vec<Dialogue>, secondary: Vec<Dialogue>, 
 
     let second = find_secondary_matches(first, &secondary);
     let text = first.text
+      .replace("\n", " ")
       .replace("\\N", " ")
       .replace("\\n", " ");
     let second: String = second.iter().map(|d| d.text.clone()).collect::<Vec<_>>().join(" ")
+      .replace("\n", " ")
       .replace("\\N", " ")
       .replace("\\n", " ");
 

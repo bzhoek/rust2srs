@@ -36,6 +36,12 @@ impl Dialogue {
     (self.start >= other.start && self.start < other.end) ||
       (other.start > self.start && other.start < self.end)
   }
+
+  fn shift(&mut self, offset: f32) {
+    let millis = (offset * 1000.0) as u64;
+    self.start = Time::from_millis(self.start.milliseconds() + millis);
+    self.end = Time::from_millis(self.end.milliseconds() + millis);
+  }
 }
 
 #[derive(Debug, PartialEq)]
@@ -68,6 +74,10 @@ impl Time {
     }
   }
 
+  pub fn from_millis(millis: u64) -> Time {
+    Self::from_nanos(millis)
+  }
+
   pub fn milliseconds(&self) -> u64 {
     ((self.hour as u64 * 60 + self.min as u64) * 60 + self.sec as u64) * 1000 + self.mil as u64
   }
@@ -86,9 +96,21 @@ impl Time {
   }
 }
 
-pub fn parse_subtitle_file(path: &str) -> Option<Vec<Dialogue>> {
+pub fn offset_subtitle_file(path: &str, offset: &Option<f32>) -> Option<Vec<Dialogue>> {
+  parse_subtitle_file(path).map(|mut dialogue| {
+    for d in dialogue.iter_mut() {
+      if let Some(offset) = offset {
+        d.shift(*offset);
+      }
+    }
+    dialogue
+  })
+}
+
+fn parse_subtitle_file(path: &str) -> Option<Vec<Dialogue>> {
   let contents = fs::read_to_string(path)
     .expect("cannot read file");
+
   if let Some(dialogue) = parse_assa_to_dialogue(&contents) {
     return Some(dialogue);
   }
@@ -98,6 +120,7 @@ pub fn parse_subtitle_file(path: &str) -> Option<Vec<Dialogue>> {
   if let Some(dialogue) = parse_subrip_to_dialogue(&contents) {
     return Some(dialogue);
   }
+
   None
 }
 
@@ -140,8 +163,16 @@ pub fn generate_tab_separated(primary: Vec<Dialogue>, secondary: Vec<Dialogue>, 
         (id, sound, image)
       }
     };
-    writeln!(&writer, "{}\t{}\t{}\t{}\t{}\t{}", prefix, id, sound, image, text, second).unwrap();
+    writeln!(&writer, "{}\t{}\t{}\t{}\t{}\t{}", id, sound, image, text, second, prefix).unwrap();
   }
+}
+
+pub fn sample_range(sample: &Option<u32>) -> (u64, u64) {
+  let (start, end) = match sample {
+    None => (0, u64::MAX),
+    Some(start) => (*start as u64 * 1000 * 60, (*start as u64 + 3) * 1000 * 60)
+  };
+  (start, end)
 }
 
 #[cfg(test)]
@@ -187,8 +218,8 @@ mod tests {
 
   #[test]
   fn it_generates_tab_separated() {
-    let primary = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
-    let secondary = parse_subtitle_file("tests/totoro.en.ass").unwrap();
+    let primary = offset_subtitle_file("tests/totoro.ja.srt", &None).unwrap();
+    let secondary = offset_subtitle_file("tests/totoro.en.ass", &None).unwrap();
     assert_eq!(551, secondary.len());
     generate_tab_separated(primary, secondary, "target", "totoro", AudioSuffix::EndTime);
   }

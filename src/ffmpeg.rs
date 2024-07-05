@@ -10,10 +10,10 @@ use ffmpeg_next::util::frame::video::Video;
 use jpeg_encoder::{ColorType, Encoder};
 use log::info;
 
-use crate::{Dialogue, Time};
+use crate::{Dialogue, sample_range, Time};
 use crate::Result;
 
-pub fn extract_screenshots(video_file: &str, folder: &str, prefix: &str, subtitles: &[Dialogue])
+pub fn extract_screenshots(video_file: &str, folder: &str, prefix: &str, subtitles: &[Dialogue], sample: &Option<u32>)
                            -> Result<()> {
   ffmpeg_next::init().unwrap();
   info!("Extracting screenshots from {}", video_file);
@@ -31,6 +31,8 @@ pub fn extract_screenshots(video_file: &str, folder: &str, prefix: &str, subtitl
     let mut dialogue = dialogues.next().unwrap();
     let mut half = dialogue.start.half_way(&dialogue.end);
 
+    let (start, end) = sample_range(sample);
+
     let stream_index = stream.index();
     for (stream, packet) in input.packets() {
       if stream.index() != stream_index { continue; }
@@ -39,12 +41,17 @@ pub fn extract_screenshots(video_file: &str, folder: &str, prefix: &str, subtitl
       while video.receive_frame(&mut decoded).is_ok() {
         let timestamp = decoded.timestamp().unwrap();
         let timestamp = Time::from_nanos(timestamp as u64);
+
+        if timestamp.milliseconds() > end { return Ok(()); }
+
         if timestamp.milliseconds() > half.milliseconds() {
-          let snapshot_file = format!("{}/{}_{}", folder, prefix, dialogue.start.hms());
-          info!("Saving {}", snapshot_file);
-          let mut rgb_frame = Video::empty();
-          scaler.run(&decoded, &mut rgb_frame)?;
-          save_snapshot(&rgb_frame, snapshot_file.clone()).unwrap();
+          if timestamp.milliseconds() > start {
+            let snapshot_file = format!("{}/{}_{}", folder, prefix, dialogue.start.hms());
+            info!("Saving {}", snapshot_file);
+            let mut rgb_frame = Video::empty();
+            scaler.run(&decoded, &mut rgb_frame)?;
+            save_snapshot(&rgb_frame, snapshot_file.clone()).unwrap();
+          }
           match dialogues.next() {
             None => { return Ok(()); }
             Some(next) => {
@@ -114,22 +121,22 @@ pub fn audio(video: &Path, start: &Time, end: &Time, output: String) -> std::io:
 
 #[cfg(test)]
 mod tests {
-  use crate::parse_subtitle_file;
+  use crate::offset_subtitle_file;
 
   use super::*;
 
   #[test]
   fn it_extracts_image() {
-    let mut dialogue = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
+    let mut dialogue = offset_subtitle_file("tests/totoro.ja.srt", None).unwrap();
     let one = dialogue.remove(50);
     let dialogue = vec![one];
-    extract_screenshots("totoro.mkv", "target", "totoro", &dialogue).unwrap();
+    extract_screenshots("totoro.mkv", "target", "totoro", &dialogue, &None).unwrap();
   }
 
   #[test]
   fn it_extracts_images() {
-    let dialogue = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
-    extract_screenshots("totoro.mkv", "target", "totoro", &dialogue).unwrap();
+    let dialogue = offset_subtitle_file("tests/totoro.ja.srt", None).unwrap();
+    extract_screenshots("totoro.mkv", "target", "totoro", &dialogue, &None).unwrap();
   }
 
   #[test]

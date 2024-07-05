@@ -5,7 +5,7 @@ use log::{debug, info};
 
 use rmp3::{Decoder, Frame};
 
-use crate::{Dialogue, Result};
+use crate::{Dialogue, Result, sample_range};
 
 pub struct Mp3 {
   bytes: Vec<u8>,
@@ -51,10 +51,14 @@ pub enum AudioSuffix {
   EndTime,
 }
 
-pub fn extract_sound_clips(audio_file: &str, folder: &str, prefix: &str, subtitles: &Vec<Dialogue>, suffix: AudioSuffix) -> Result<()> {
+pub fn extract_sound_clips(audio_file: &str, folder: &str, prefix: &str, subtitles: &Vec<Dialogue>, suffix: AudioSuffix, sample: Option<u32>) -> Result<()> {
   info!("Extracting audio clips from {}", audio_file);
+  let (start, end) = sample_range(&sample);
   let mp3 = Mp3::new(audio_file)?;
   for dialogue in subtitles {
+    if dialogue.start.milliseconds() < start || dialogue.start.milliseconds() > end {
+      continue;
+    }
     let audio_file = match suffix {
       AudioSuffix::None => format!("{}/{}_{}.mp3", folder, prefix, dialogue.start),
       AudioSuffix::EndTime => format!("{}/{}_{}-{}.mp3", folder, prefix, dialogue.start, dialogue.end)
@@ -72,7 +76,7 @@ mod tests {
 
   use rmp3::{Decoder, Frame};
 
-  use crate::{parse_subtitle_file, Time};
+  use crate::{offset_subtitle_file, Time};
   use crate::mp3::{AudioSuffix, extract_sound_clips, Mp3};
 
   #[test]
@@ -109,14 +113,14 @@ mod tests {
 
   #[test]
   fn it_slices_ichigo() {
-    let subtitles = parse_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
-    extract_sound_clips("ichigo-01.mp3", "target", "ichigo-01", &subtitles, AudioSuffix::EndTime).unwrap();
+    let subtitles = offset_subtitle_file("tests/ichigo-01_jp.ass", None).unwrap();
+    extract_sound_clips("ichigo-01.mp3", "target", "ichigo-01", &subtitles, AudioSuffix::EndTime, None).unwrap();
   }
 
   #[test]
   fn it_extracts_totoro() {
-    let subtitles = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
-    extract_sound_clips("totoro.mp3", "target", "totoro", &subtitles, AudioSuffix::EndTime).unwrap();
+    let subtitles = offset_subtitle_file("tests/totoro.ja.srt", None).unwrap();
+    extract_sound_clips("totoro.mp3", "target", "totoro", &subtitles, AudioSuffix::EndTime, None).unwrap();
   }
 
   #[test]
@@ -130,9 +134,9 @@ mod tests {
 
   #[test]
   fn it_extracts_one_totoro_dialogue() {
-    let mut subtitles = parse_subtitle_file("tests/totoro.ja.srt").unwrap();
+    let mut subtitles = offset_subtitle_file("tests/totoro.ja.srt", None).unwrap();
     let one = subtitles.remove(50);
     let dialogue = vec![one];
-    extract_sound_clips("totoro.mp3", "target", "totoro", &dialogue, AudioSuffix::EndTime).unwrap();
+    extract_sound_clips("totoro.mp3", "target", "totoro", &dialogue, AudioSuffix::EndTime, None).unwrap();
   }
 }

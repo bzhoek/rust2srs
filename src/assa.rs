@@ -74,7 +74,7 @@ mod tests {
 
   use assert_matches::assert_matches;
 
-  use crate::{find_secondary_matches, parse_subtitle_file};
+  use crate::{find_secondary_matches, offset_subtitle_file};
   use crate::assa::parse_assa;
 
   use super::*;
@@ -111,10 +111,10 @@ mod tests {
 
   #[test]
   fn it_matches_secondary_subtitle() {
-    let primary = parse_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
+    let primary = offset_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
     assert_eq!(350, primary.len());
     let first = primary.first().unwrap();
-    let secondary = parse_subtitle_file("tests/ichigo-01_en.ass").unwrap();
+    let secondary = offset_subtitle_file("tests/ichigo-01_en.ass").unwrap();
     assert_eq!(360, secondary.len());
     let second = find_secondary_matches(first, &secondary);
     assert_matches!(second.first(), Some(Dialogue {text, .. }) if text == "What lovely weather.");
@@ -126,9 +126,9 @@ mod tests {
 
   #[test]
   fn it_matches_multiple_lines() {
-    let primary = parse_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
+    let primary = offset_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
     let first = primary.get(4).unwrap();
-    let secondary = parse_subtitle_file("tests/ichigo-01_en.ass").unwrap();
+    let secondary = offset_subtitle_file("tests/ichigo-01_en.ass").unwrap();
     let second = find_secondary_matches(first, &secondary);
 
     assert_eq!(2, second.len());
@@ -138,8 +138,8 @@ mod tests {
 
   #[test]
   fn it_generates_tab_separated() {
-    let primary = parse_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
-    let secondary = parse_subtitle_file("tests/ichigo-01_en.ass").unwrap();
+    let primary = offset_subtitle_file("tests/ichigo-01_jp.ass").unwrap();
+    let secondary = offset_subtitle_file("tests/ichigo-01_en.ass").unwrap();
     for first in primary.iter() {
       let second = find_secondary_matches(first, &secondary);
       let text = first.text

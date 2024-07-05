@@ -9,7 +9,7 @@ use log::debug;
 use ::rust2srs::Result;
 use rust2srs::ffmpeg::extract_screenshots;
 use rust2srs::mp3::{AudioSuffix, extract_sound_clips};
-use rust2srs::{generate_tab_separated, parse_subtitle_file};
+use rust2srs::{generate_tab_separated, offset_subtitle_file};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -18,6 +18,10 @@ struct Cli {
   #[arg(short, long)]
   source: String,
 
+  /// Offset
+  #[arg(long)]
+  offset: Option<f32>,
+
   /// Output folder
   #[arg(short, long)]
   output: String,
@@ -25,6 +29,10 @@ struct Cli {
   /// Prefix folder
   #[arg(short, long)]
   prefix: String,
+
+  /// Sample 5 minutes from this minute
+  #[arg(long)]
+  sample: Option<u32>,
 
   /// Verbose logging
   #[arg(short, long, default_value = "false")]
@@ -50,6 +58,10 @@ enum Commands {
     /// Source language subtitles
     #[arg(short, long)]
     target: String,
+
+    /// Offset
+    #[arg(long)]
+    offset: Option<f32>,
   },
 }
 
@@ -61,16 +73,16 @@ fn main() -> Result<()> {
   ).target(Stdout).init();
   debug!("Verbose logging");
 
-  let source = parse_subtitle_file(&args.source).expect("Unrecognized subtitle format");
+  let source = offset_subtitle_file(&args.source, &args.offset).expect("Unrecognized subtitle format");
   match args.command {
     Commands::Video { video } => {
-      extract_screenshots(&video, &args.output, &args.prefix, &source)?;
+      extract_screenshots(&video, &args.output, &args.prefix, &source, &args.sample)?;
     }
     Commands::Audio { audio } => {
-      extract_sound_clips(&audio, &args.output, &args.prefix, &source, AudioSuffix::None)?;
+      extract_sound_clips(&audio, &args.output, &args.prefix, &source, AudioSuffix::None, args.sample)?;
     }
-    Commands::Anki { target } => {
-      let target = parse_subtitle_file(&target).expect("Unrecognized subtitle format");
+    Commands::Anki { target, offset } => {
+      let target = offset_subtitle_file(&target, &offset).expect("Unrecognized subtitle format");
       generate_tab_separated(source, target, &args.output, &args.prefix, AudioSuffix::None);
     }
   }

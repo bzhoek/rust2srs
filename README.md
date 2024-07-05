@@ -17,6 +17,8 @@ rust2srs -s ichigo-05-jp.ass -o output -p ichigo-05 anki  -t ichigo-05-en.ass
 
 ### Process
 
+Check that the subtitles appear before speech starts and disappear after it completes.
+
 1. Re-encode for smaller screenshots
 2. Generate snapshots from subtitles
 3. Extract audio as MP3
@@ -32,7 +34,8 @@ Violentmonkey plug-in that adds a `Netflix subtitle downloader` menu to the top 
 
 Change video resolution and audio encoding to something appropriate for a mobile device with:
 ```sh
-ffpmeg -i input.mkv -vf scale=-1:720 -c:v libx264 -crf 18 -preset veryslow -acodec libmp3lame output.mkv
+ffmpeg -i input.mkv -vf scale=-1:360 -c:v libx264 -crf 18 -preset veryslow -acodec libmp3lame scaled.mkv
+ffmpeg -i scaled.mkv -vf "crop=640:360" cropped.mkv
 ```
 
 ## Subtitles
@@ -41,6 +44,8 @@ Substation Alpha (SSA) supports formatting, animation and karaoke. V4+ (ASS) is 
 
 Add subtitles to a new stream with:
 ```sh
+ffprobe -i input.mkv
+ffmpeg -i input.mkv -map 0:2 -c copy subtitles.ass
 ffmpeg -i input.mkv -i subs.srt -map 0 -map 1 -c copy output.mkv
 ```
 
@@ -60,6 +65,7 @@ ffmpeg -i ichigo-02_00137.mp3 -filter:a "atempo=0.8" -vn ichigo-slow.mp3
 ### Resize
 
 ```sh
+ffmpeg -i input.mkv -vf "crop=640:360" cropped.mkv
 ffmpeg -i input.mkv -s 640x360 -c:a copy     resized.mkv
 ffmpeg -i input.mkv -s 640x360 -c:a copy -an resized.mkv # without audio
 ```

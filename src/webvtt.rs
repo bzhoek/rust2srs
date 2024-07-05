@@ -66,7 +66,7 @@ fn webvtt_to_dialogue(pair: Pair<Rule>, mut list: Vec<Dialogue>) -> Vec<Dialogue
 mod tests {
   use std::fs;
   use assert_matches::assert_matches;
-  use crate::{find_secondary_matches, parse_subtitle_file};
+  use crate::{find_secondary_matches, offset_subtitle_file};
 
   use super::*;
 
@@ -92,8 +92,8 @@ mod tests {
 
   #[test]
   fn it_matches_secondary_subtitle() {
-    let primary = parse_subtitle_file("tests/totoro.ja.vtt").unwrap();
-    let secondary = parse_subtitle_file("tests/totoro.en.vtt").unwrap();
+    let primary = offset_subtitle_file("tests/totoro.ja.vtt").unwrap();
+    let secondary = offset_subtitle_file("tests/totoro.en.vtt").unwrap();
     assert_eq!(839, primary.len());
     assert_eq!(615, secondary.len());
     let first = primary.get(26).unwrap();
@@ -104,8 +104,8 @@ mod tests {
 
   #[test]
   fn it_generates_tab_separated() {
-    let primary = parse_subtitle_file("tests/totoro.ja.vtt").unwrap();
-    let secondary = parse_subtitle_file("tests/totoro.en.vtt").unwrap();
+    let primary = offset_subtitle_file("tests/totoro.ja.vtt").unwrap();
+    let secondary = offset_subtitle_file("tests/totoro.en.vtt").unwrap();
     for first in primary.iter() {
       let second = find_secondary_matches(first, &secondary);
       let text = first.text

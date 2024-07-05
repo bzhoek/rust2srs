@@ -66,8 +66,8 @@ fn create_scaler(video: &ffmpeg_next::decoder::Video) -> Result<Context> {
     video.width(),
     video.height(),
     Pixel::RGB24,
-    640,
-    360,
+    video.width(),
+    video.height(),
     Flags::BILINEAR,
   )?;
   Ok(scaler)
